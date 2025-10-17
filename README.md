@@ -1,0 +1,91 @@
+# Star Shooter
+
+Star Shooter is a retro-inspired 3D space shooter game developed using Pygame. Navigate your spaceship through a vast grid-based universe, collect keys, manage your fuel, and engage in thrilling combat against enemy ships. Your ultimate goal is to defeat the formidable boss and emerge victorious.
+
+## Features
+
+*   **First-Person 3D Perspective:** Experience space combat from within your immersive cockpit.
+*   **Dynamic Starfield:** A visually engaging starfield with twinkling, multi-colored stars that reacts to your movement.
+*   **Grid-Based Exploration:** Navigate a universe divided into sectors, each with its own challenges and resources, including planets and asteroid fields.
+*   **Resource Management:** Keep an eye on your fuel levels, which deplete with movement, combat, and warping. Refuel at friendly starbases.
+*   **Dual Weapon System:** Engage enemies with rapid-fire lasers or powerful, limited-supply missiles.
+*   **Long-Range Missiles:** Fire missiles at enemies on the galactic map for strategic advantage.
+*   **Radar and Map Displays:** Utilize on-screen instruments to track enemies, bases, planets, and keys.
+*   **Varied Enemy Types:** Encounter different enemy types, including Fighters, Bombers, and powerful Cruisers, each with unique behaviors.
+*   **Procedurally Generated Sounds:** Immersive and varied sound effects for lasers, missiles, explosions, and and shield hits.
+*   **Improved Explosions:** More visually impressive explosion animation with particles.
+*   **Shield Hit Effect:** A visual effect with particles when the player's shield is hit.
+*   **Date/Time System:** An in-game date that advances with actions, adding a time-based challenge.
+*   **Win/Loss Conditions:** Collect all keys from planets to summon the boss, defeat it to win, or face defeat if your fuel runs out, the boss reaches you, or the maximum date is exceeded.
+
+## Installation
+
+To set up and run Star Luster, follow these steps:
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/star-luster.git
+    cd star-luster
+    ```
+    (If not a git repository, download the project files and navigate to the project directory.)
+
+2.  **Install Python:**
+    Ensure you have Python 3.x installed. You can download it from [python.org](https://www.python.org/downloads/).
+
+3.  **Install dependencies:**
+    The game requires Pygame. Install it using pip:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Generate Sound Files:**
+    The game uses procedurally generated sound effects. Run the `generate_sounds.py` script to create them:
+    ```bash
+    python generate_sounds.py
+    ```
+
+## How to Play Star Luster
+
+### Objective
+*   Collect the two keys scattered across the grid, found on planets.
+*   Once both keys are collected, a powerful boss will appear.
+*   Defeat the boss to win the game!
+*   Be careful: running out of fuel, letting the boss reach you, or exceeding the maximum date will result in a game over.
+
+### Controls
+*   **Arrow Keys (UP/DOWN):** Move your ship forward and backward.
+*   **Arrow Keys (LEFT/RIGHT):** Rotate your ship.
+*   **Spacebar:** Fire your laser (consumes a small amount of fuel).
+*   **N Key:** Fire a missile (limited supply, restock at bases).
+*   **W Key:** Toggle warp targeting mode. In this mode, use arrow keys to select a target sector, then press 'W' again to warp (consumes fuel based on distance).
+*   **H Key:** Warp to a random sector (consumes a fixed amount of fuel).
+*   **M Key:** Open the galactic map. In map mode, use arrow keys to move a targeting cursor, then press 'Spacebar' to fire a long-range missile at an enemy in the targeted sector (consumes a missile). Press 'M' again to exit map mode.
+
+### On-Screen Displays
+*   **Cockpit View:** Your primary view of the 3D space, now with an immersive cockpit frame.
+*   **Fuel Gauge:** Located on the right side of the cockpit, shows your remaining fuel.
+*   **Missile Count:** Displays how many missiles you have left.
+*   **Key Count:** Shows how many keys you've collected out of the total (e.g., "Keys: 1/2").
+*   **Shield:** Displays your current shield strength.
+*   **Score:** Your current score.
+*   **Date:** The in-game date, which advances with certain actions.
+*   **Map (Bottom Left):** A 2D grid representing the universe.
+    *   Yellow Circle: Your current position.
+    *   Blue Squares: Starbases (dock here to refuel and restock missiles).
+    *   Yellow Squares: Planets with keys.
+    *   Blue Circles: Planets without keys.
+    *   Gray Circles: Asteroid fields (flying into them will damage your shield).
+*   **Radar (Bottom Right):** Detects nearby objects.
+    *   Red Dots: Fighter enemy ships.
+    *   Orange Squares: Bomber enemy ships.
+    *   Light Gray Rectangles: Cruiser enemy ships.
+    *   Magenta Dot: The Boss (appears after collecting all keys).
+
+## Sound Generation
+
+The game's sound effects are procedurally generated by `generate_sounds.py`. This script creates `.wav` files for various in-game actions (laser, missile, explosion, warp, game over, win) and places them in the `assets/sounds/` directory. You must run this script once after installation to ensure all sound assets are available.
+
+## Credits
+
+*   Developed by [Your Name/Team Name]
+*   Inspired by classic space combat games.
