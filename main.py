@@ -25,7 +25,7 @@ SCREEN_HEIGHT = 600
 
 # Create the screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Star Luster")
+pygame.display.set_caption("Star Shooter")
 
 # Colors
 WHITE = (255, 255, 255)
@@ -81,7 +81,7 @@ keys_collected_count = 0
 boss = None
 
 # Game State
-game_state = 'playing' # playing, won, lost, map
+game_state = 'menu' # playing, won, lost, map, menu
 warp_targeting = False
 target_grid_x = player_grid_x
 target_grid_y = player_grid_y
@@ -139,7 +139,7 @@ def load_high_score():
     except FileNotFoundError:
         return 0
 
-def reset_game():
+def reset_game(mode='adventure'):
     global player_angle, player_rotation_speed, player_speed, player_grid_x, player_grid_y, player_fuel, player_shield, player_missiles, game_state, warp_targeting, target_grid_x, target_grid_y, stars, bullets, missiles, explosions, enemy_bullets, enemies, bases, score, planets, keys_collected_count, boss, date, target_cursor_x, target_cursor_y, asteroid_fields, asteroids, shield_hit_particles
     player_angle = 0
     player_rotation_speed = 0
@@ -150,7 +150,7 @@ def reset_game():
     player_shield = 100
     player_missiles = 5
     score = 0
-    game_state = 'playing'
+    game_state = 'playing' # Always start in playing state after menu selection
     warp_targeting = False
     target_grid_x = player_grid_x
     target_grid_y = player_grid_y
@@ -169,9 +169,6 @@ def reset_game():
     explosions = []
     enemy_bullets = []
     enemies = []
-    enemy_type = random.choice(['fighter', 'bomber', 'cruiser'])
-    health = {'fighter': 10, 'bomber': 20, 'cruiser': 50}[enemy_type]
-    enemies.append({'x': 0, 'y': 0, 'z': 200, 'type': enemy_type, 'grid_x': player_grid_x, 'grid_y': player_grid_y, 'health': health})
     bases = []
     bases.append({'x': 1, 'y': 1, 'health': 100})
     bases.append({'x': 6, 'y': 6, 'health': 100})
@@ -179,36 +176,73 @@ def reset_game():
     keys_collected_count = 0
     boss = None
     date = 0
-    # Create 2 planets with keys
-    while len(planets) < 2:
-        planet_x = random.randint(0, GRID_SIZE - 1)
-        planet_y = random.randint(0, GRID_SIZE - 1)
-        is_on_base = any(base['x'] == planet_x and base['y'] == planet_y for base in bases)
-        is_on_player_start = (planet_x == 4 and planet_y == 4)
-        is_duplicate = any(p['x'] == planet_x and p['y'] == planet_y for p in planets)
-        if not is_on_base and not is_on_player_start and not is_duplicate:
-            planets.append({'x': planet_x, 'y': planet_y, 'has_key': True})
-
-    # Create some more planets without keys
-    while len(planets) < 5:
-        planet_x = random.randint(0, GRID_SIZE - 1)
-        planet_y = random.randint(0, GRID_SIZE - 1)
-        is_on_base = any(base['x'] == planet_x and base['y'] == planet_y for base in bases)
-        is_on_player_start = (planet_x == 4 and planet_y == 4)
-        is_duplicate = any(p['x'] == planet_x and p['y'] == planet_y for p in planets)
-        if not is_on_base and not is_on_player_start and not is_duplicate:
-            planets.append({'x': planet_x, 'y': planet_y, 'has_key': False})
     asteroid_fields = []
-    while len(asteroid_fields) < 3:
-        ax = random.randint(0, GRID_SIZE - 1)
-        ay = random.randint(0, GRID_SIZE - 1)
-        is_on_base = any(base['x'] == ax and base['y'] == ay for base in bases)
-        is_on_planet = any(p['x'] == ax and p['y'] == ay for p in planets)
-        is_on_player_start = (ax == 4 and ay == 4)
-        is_duplicate = any(af['x'] == ax and af['y'] == ay for af in asteroid_fields)
-        if not is_on_base and not is_on_planet and not is_on_player_start and not is_duplicate:
-            asteroid_fields.append({'x': ax, 'y': ay})
     shield_hit_particles = []
+
+    if mode == 'adventure':
+        # Create 2 planets with keys
+        while len(planets) < 2:
+            planet_x = random.randint(0, GRID_SIZE - 1)
+            planet_y = random.randint(0, GRID_SIZE - 1)
+            is_on_base = any(base['x'] == planet_x and base['y'] == planet_y for base in bases)
+            is_on_player_start = (planet_x == 4 and planet_y == 4)
+            is_duplicate = any(p['x'] == planet_x and p['y'] == planet_y for p in planets)
+            if not is_on_base and not is_on_player_start and not is_duplicate:
+                planets.append({'x': planet_x, 'y': planet_y, 'has_key': True})
+
+        # Create some more planets without keys
+        while len(planets) < 5:
+            planet_x = random.randint(0, GRID_SIZE - 1)
+            planet_y = random.randint(0, GRID_SIZE - 1)
+            is_on_base = any(base['x'] == planet_x and base['y'] == planet_y for base in bases)
+            is_on_player_start = (planet_x == 4 and planet_y == 4)
+            is_duplicate = any(p['x'] == planet_x and p['y'] == planet_y for p in planets)
+            if not is_on_base and not is_on_player_start and not is_duplicate:
+                planets.append({'x': planet_x, 'y': planet_y, 'has_key': False})
+        
+        # Initial enemy for adventure mode
+        enemy_type = random.choice(['fighter', 'bomber', 'cruiser'])
+        health = {'fighter': 10, 'bomber': 20, 'cruiser': 50}[enemy_type]
+        enemies.append({'x': 0, 'y': 0, 'z': 200, 'type': enemy_type, 'grid_x': player_grid_x, 'grid_y': player_grid_y, 'health': health})
+
+        # Asteroid fields for adventure mode
+        while len(asteroid_fields) < 3:
+            ax = random.randint(0, GRID_SIZE - 1)
+            ay = random.randint(0, GRID_SIZE - 1)
+            is_on_base = any(base['x'] == ax and base['y'] == ay for base in bases)
+            is_on_planet = any(p['x'] == ax and p['y'] == ay for p in planets)
+            is_on_player_start = (ax == 4 and ay == 4)
+            is_duplicate = any(af['x'] == ax and af['y'] == ay for af in asteroid_fields)
+            if not is_on_base and not is_on_planet and not is_on_player_start and not is_duplicate:
+                asteroid_fields.append({'x': ax, 'y': ay})
+
+    elif mode == 'command':
+        # Command mode specific initialization
+        # More enemies, focus on defending bases
+        for _ in range(5): # 5 initial enemies
+            enemy_type = random.choice(['fighter', 'bomber', 'cruiser'])
+            health = {'fighter': 10, 'bomber': 20, 'cruiser': 50}[enemy_type]
+            enemies.append({'x': random.randint(-100, 100), 'y': random.randint(-100, 100), 'z': random.randint(200, 500), 'type': enemy_type, 'grid_x': random.randint(0, GRID_SIZE - 1), 'grid_y': random.randint(0, GRID_SIZE - 1), 'health': health})
+        # No keys, no boss in command mode
+        planets = []
+        keys_collected_count = 0
+        boss = None
+        # No asteroid fields in command mode for simplicity
+        asteroid_fields = []
+
+    elif mode == 'training':
+        # Training mode specific initialization
+        # Few enemies, no objectives
+        for _ in range(2): # 2 initial enemies
+            enemy_type = random.choice(['fighter', 'cruiser']) # No bombers in training
+            health = {'fighter': 10, 'bomber': 20, 'cruiser': 50}[enemy_type]
+            enemies.append({'x': random.randint(-100, 100), 'y': random.randint(-100, 100), 'z': random.randint(200, 500), 'type': enemy_type, 'grid_x': random.randint(0, GRID_SIZE - 1), 'grid_y': random.randint(0, GRID_SIZE - 1), 'health': health})
+        # No keys, no boss, no bases, no asteroid fields in training mode
+        planets = []
+        keys_collected_count = 0
+        boss = None
+        bases = []
+        asteroid_fields = []
 
 def draw_star_map():
     screen.fill(BLACK)
@@ -507,7 +541,7 @@ while running:
         elif game_state == 'lost':
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
-                    reset_game()
+                    game_state = 'menu' # Go back to menu after game over
 
     if game_state == 'playing':
         # Update player rotation and position
@@ -966,6 +1000,41 @@ while running:
         restart_text = font.render("Press R to Restart", True, WHITE)
         restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 100))
         screen.blit(restart_text, restart_rect)
+
+    elif game_state == 'menu':
+        screen.fill(BLACK)
+        font = pygame.font.Font(None, 100)
+        text = font.render("STAR SHOOTER", True, YELLOW)
+        text_rect = text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 150))
+        screen.blit(text, text_rect)
+
+        font = pygame.font.Font(None, 50)
+        adventure_text = font.render("1. Adventure Mode", True, WHITE)
+        adventure_rect = adventure_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 50))
+        screen.blit(adventure_text, adventure_rect)
+
+        command_text = font.render("2. Command Mode", True, WHITE)
+        command_rect = command_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
+        screen.blit(command_text, command_rect)
+
+        training_text = font.render("3. Training Mode", True, WHITE)
+        training_rect = training_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 50))
+        screen.blit(training_text, training_rect)
+
+        # Handle menu input
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    game_state = 'playing'
+                    reset_game(mode='adventure')
+                elif event.key == pygame.K_2:
+                    game_state = 'playing' # Start playing after mode selection
+                    reset_game(mode='command')
+                elif event.key == pygame.K_3:
+                    game_state = 'playing' # Start playing after mode selection
+                    reset_game(mode='training')
 
 
     # Update the display

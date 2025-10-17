@@ -20,11 +20,11 @@ Star Shooter is a retro-inspired 3D space shooter game developed using Pygame. N
 
 ## Installation
 
-To set up and run Star Luster, follow these steps:
+To set up and run Star Shooter, follow these steps:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/star-luster.git
+    git clone https://github.com/your-username/star-shooter.git
     cd star-luster
     ```
     (If not a git repository, download the project files and navigate to the project directory.)
@@ -44,7 +44,7 @@ To set up and run Star Luster, follow these steps:
     python generate_sounds.py
     ```
 
-## How to Play Star Luster
+## How to Play Star Shooter
 
 ### Objective
 *   Collect the two keys scattered across the grid, found on planets.
