@@ -47,39 +47,63 @@ To set up and run Star Shooter, follow these steps:
 ## How to Play Star Shooter
 
 ### Objective
-*   Collect the two keys scattered across the grid, found on planets.
-*   Once both keys are collected, a powerful boss will appear.
-*   Defeat the boss to win the game!
-*   Be careful: running out of fuel, letting the boss reach you, or exceeding the maximum date will result in a game over.
+
+Your primary objective depends on the game mode you choose:
+
+*   **Adventure Mode:** Explore the galaxy to find and collect 7 keys from different planets. Once all keys are collected, the location of the final planet, where the boss awaits, will be revealed. Navigate to the final planet and defeat the boss to win the game.
+*   **Command Mode:** Your mission is to defend your starbases from relentless waves of enemy attacks. You must strategically manage your resources and prioritize threats to keep your bases operational. The game ends if all your bases are destroyed.
+*   **Training Mode:** A sandbox mode where you can freely practice your flying and combat skills without any specific objectives or threats.
 
 ### Controls
-*   **Arrow Keys (UP/DOWN):** Move your ship forward and backward.
-*   **Arrow Keys (LEFT/RIGHT):** Rotate your ship.
-*   **Spacebar:** Fire your laser (consumes a small amount of fuel).
-*   **N Key:** Fire a missile (limited supply, restock at bases).
-*   **W Key:** Toggle warp targeting mode. In this mode, use arrow keys to select a target sector, then press 'W' again to warp (consumes fuel based on distance).
-*   **H Key:** Warp to a random sector (consumes a fixed amount of fuel).
-*   **M Key:** Open the galactic map. In map mode, use arrow keys to move a targeting cursor, then press 'Spacebar' to fire a long-range missile at an enemy in the targeted sector (consumes a missile). Press 'M' again to exit map mode.
 
-### On-Screen Displays
-*   **Cockpit View:** Your primary view of the 3D space, now with an immersive cockpit frame.
-*   **Fuel Gauge:** Located on the right side of the cockpit, shows your remaining fuel.
-*   **Missile Count:** Displays how many missiles you have left.
-*   **Key Count:** Shows how many keys you've collected out of the total (e.g., "Keys: 1/2").
-*   **Shield:** Displays your current shield strength.
-*   **Score:** Your current score.
-*   **Date:** The in-game date, which advances with certain actions.
-*   **Map (Bottom Left):** A 2D grid representing the universe.
-    *   Yellow Circle: Your current position.
-    *   Blue Squares: Starbases (dock here to refuel and restock missiles).
-    *   Yellow Squares: Planets with keys.
-    *   Blue Circles: Planets without keys.
-    *   Gray Circles: Asteroid fields (flying into them will damage your shield).
-*   **Radar (Bottom Right):** Detects nearby objects.
-    *   Red Dots: Fighter enemy ships.
-    *   Orange Squares: Bomber enemy ships.
-    *   Light Gray Rectangles: Cruiser enemy ships.
-    *   Magenta Dot: The Boss (appears after collecting all keys).
+*   **Arrow Keys (UP/DOWN):** Increase or decrease your ship's speed.
+*   **Arrow Keys (LEFT/RIGHT):** Rotate your ship left or right.
+*   **Spacebar:** Fire your laser weapon. This consumes a small amount of energy.
+*   **N Key:** Launch a powerful missile. You have a limited supply, which can be restocked at starbases.
+*   **W Key:** Toggle warp targeting mode. When activated, use the arrow keys to select a target sector on the galactic map. Press 'W' again to initiate the warp. Warping consumes a significant amount of energy, and the amount depends on the distance traveled.
+*   **H Key:** Execute a random warp to an unknown sector. This is a risky maneuver but can be useful for a quick escape. It consumes a fixed amount of energy.
+*   **M Key:** Open the galactic map. In this view, you can see the entire grid, including the locations of planets, bases, and enemies. You can also use the arrow keys to move a targeting cursor and press the **Spacebar** to fire a long-range missile at an enemy in the targeted sector. This consumes one missile. Press 'M' again to exit the map.
+
+### On-Screen Displays & Cockpit
+
+Your view is from the cockpit of your starfighter, the "Gaia". The cockpit provides you with all the necessary information to navigate and survive in the galaxy.
+
+*   **Main Viewport:** Your primary view of the 3D space in front of your ship.
+*   **Energy Gauge (Bottom Left):** An arc-shaped gauge that displays your remaining energy. Energy is consumed by firing weapons, warping, and taking damage.
+*   **Missile Count (Bottom Right):** A series of vertical bars indicating your remaining missiles.
+*   **System Status (Top Left):** Shows the current status of your ship's critical systems: Radar, Computer, and Engine. The health of each system is displayed as a percentage, and the color changes from green to yellow to red as damage is sustained.
+*   **Score & High Score (Top Center):** Your current score and the high score.
+*   **Date (Bottom Center):** The in-game date, which advances with actions like warping. Be mindful of the date, as some events may be time-sensitive.
+*   **Key Count (Bottom Center):** Shows how many keys you have collected out of the required 7 in Adventure Mode.
+*   **Radar (Bottom Center):** A circular radar display that shows the immediate vicinity around your ship.
+    *   **Yellow Blip (Center):** Your ship.
+    *   **Red Blips:** Enemy ships.
+    *   The radar can be damaged, causing it to flicker, show less information, or fail completely.
+
+### Damage and Repairs
+
+Your ship has three critical systems that can be damaged by enemy fire or collisions with asteroids:
+
+*   **Radar:** Damage to the radar will cause it to malfunction. At moderate damage, it may flicker or only show your position. At critical damage, it will be completely disabled.
+*   **Computer:** A damaged computer will affect your ability to warp. At moderate damage, you will lose the ability to perform targeted warps. At critical damage, all warp functions will be disabled.
+*   **Engine:** Engine damage will reduce your ship's speed and maneuverability. At critical damage, your ship will be unable to move.
+
+To repair your systems and replenish your energy and missiles, you must dock at a friendly **starbase** (indicated by a blue square on the galactic map).
+
+### Enemies
+
+You will encounter several types of enemy ships, each with its own behavior:
+
+*   **Fighters:** Small, agile ships that attack in groups.
+*   **Bombers:** Slower, more durable ships that target your starbases.
+*   **Cruisers:** Large, powerful ships that are slow but heavily armed.
+*   **Boss:** A massive, heavily armed ship that appears in Adventure Mode after you have collected all 7 keys.
+
+## A Note on Inspiration
+
+This game is a heartfelt tribute to the classic 1985 Namco game, "Star Luster." Many of the gameplay mechanics, the overall aesthetic, and the core design principles are directly inspired by this legendary title.
+
+The recent updates, including the redesigned cockpit, the circular radar, the enhanced damage system, and the new enemy sprites, were all implemented to bring the game even closer to the original "Star Luster" experience. The goal is to capture the spirit and challenge of the original, while still providing a fun and engaging experience for modern players.
 
 ## Sound Generation
 

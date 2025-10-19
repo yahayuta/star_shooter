@@ -30,10 +30,10 @@ pygame.display.set_caption("Star Shooter")
 # Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-GREEN = (0, 255, 0)
+GREEN = (0, 255, 128)   # A brighter, more minty green
 YELLOW = (255, 255, 0)
-RED = (255, 0, 0)
-BLUE = (0, 0, 255)
+RED = (255, 50, 50)     # A slightly softer red
+BLUE = (100, 100, 255)  # A lighter blue
 CYAN = (0, 255, 255)
 MAGENTA = (255, 0, 255)
 ORANGE = (255, 165, 0)
@@ -66,12 +66,10 @@ player_rotation_speed = 0
 player_speed = 0
 player_grid_x = 4
 player_grid_y = 4
-player_fuel = 1000
-MAX_FUEL = 1000
-player_shield = 100
-MAX_SHIELD = 100
-MAX_SHIELD = 100
+player_energy = 1000
+MAX_ENERGY = 1000
 player_missiles = 5
+ship_systems = {'radar': 100, 'computer': 100, 'engine': 100}
 score = 0
 high_score = load_high_score()
 
@@ -140,15 +138,15 @@ def load_high_score():
         return 0
 
 def reset_game(mode='adventure'):
-    global player_angle, player_rotation_speed, player_speed, player_grid_x, player_grid_y, player_fuel, player_shield, player_missiles, game_state, warp_targeting, target_grid_x, target_grid_y, stars, bullets, missiles, explosions, enemy_bullets, enemies, bases, score, planets, keys_collected_count, boss, date, target_cursor_x, target_cursor_y, asteroid_fields, asteroids, shield_hit_particles
+    global player_angle, player_rotation_speed, player_speed, player_grid_x, player_grid_y, player_energy, player_missiles, game_state, warp_targeting, target_grid_x, target_grid_y, stars, bullets, missiles, explosions, enemy_bullets, enemies, bases, score, planets, keys_collected_count, boss, date, target_cursor_x, target_cursor_y, asteroid_fields, asteroids, shield_hit_particles, ship_systems
     player_angle = 0
     player_rotation_speed = 0
     player_speed = 0
     player_grid_x = 4
     player_grid_y = 4
-    player_fuel = 1000
-    player_shield = 100
+    player_energy = 1000
     player_missiles = 5
+    ship_systems = {'radar': 100, 'computer': 100, 'engine': 100}
     score = 0
     game_state = 'playing' # Always start in playing state after menu selection
     warp_targeting = False
@@ -180,8 +178,8 @@ def reset_game(mode='adventure'):
     shield_hit_particles = []
 
     if mode == 'adventure':
-        # Create 2 planets with keys
-        while len(planets) < 2:
+        # Create 7 planets with keys
+        while len(planets) < 7:
             planet_x = random.randint(0, GRID_SIZE - 1)
             planet_y = random.randint(0, GRID_SIZE - 1)
             is_on_base = any(base['x'] == planet_x and base['y'] == planet_y for base in bases)
@@ -191,7 +189,7 @@ def reset_game(mode='adventure'):
                 planets.append({'x': planet_x, 'y': planet_y, 'has_key': True})
 
         # Create some more planets without keys
-        while len(planets) < 5:
+        while len(planets) < 15:
             planet_x = random.randint(0, GRID_SIZE - 1)
             planet_y = random.randint(0, GRID_SIZE - 1)
             is_on_base = any(base['x'] == planet_x and base['y'] == planet_y for base in bases)
@@ -271,8 +269,8 @@ def draw_star_map():
         planet_map_y = p['y'] * 75 + 37
         if p['has_key']:
             pygame.draw.rect(screen, YELLOW, (planet_map_x - 5, planet_map_y - 5, 10, 10))
-        else:
-            pygame.draw.circle(screen, (100, 100, 255), (planet_map_x, planet_map_y), 8)
+        elif p.get('is_final'):
+            pygame.draw.circle(screen, MAGENTA, (planet_map_x, planet_map_y), 12)
 
     # Draw asteroid fields
     for af in asteroid_fields:
@@ -305,99 +303,128 @@ def draw_star_map():
 
 
 def draw_cockpit_frame():
-    # A more detailed cockpit frame
-    # Color
-    cockpit_color = (100, 100, 110)
-    
-    # Top and bottom borders
-    pygame.draw.rect(screen, cockpit_color, (0, 0, SCREEN_WIDTH, 60))
-    pygame.draw.rect(screen, cockpit_color, (0, SCREEN_HEIGHT - 180, SCREEN_WIDTH, 180))
-
-    # Side panels
-    pygame.draw.polygon(screen, cockpit_color, [(0, 0), (150, 60), (150, SCREEN_HEIGHT - 180), (0, SCREEN_HEIGHT)])
-    pygame.draw.polygon(screen, cockpit_color, [(SCREEN_WIDTH, 0), (SCREEN_WIDTH - 150, 60), (SCREEN_WIDTH - 150, SCREEN_HEIGHT - 180), (SCREEN_WIDTH, SCREEN_HEIGHT)])
-
+    # A more detailed, Star Luster-style cockpit
+    cockpit_color = (0, 100, 0) # Dark green
+    # Top and bottom bars
+    pygame.draw.rect(screen, cockpit_color, (0, 0, SCREEN_WIDTH, 100))
+    pygame.draw.rect(screen, cockpit_color, (0, SCREEN_HEIGHT - 150, SCREEN_WIDTH, 150))
+    # Side bars
+    pygame.draw.rect(screen, cockpit_color, (0, 100, 100, SCREEN_HEIGHT - 250))
+    pygame.draw.rect(screen, cockpit_color, (SCREEN_WIDTH - 100, 100, 100, SCREEN_HEIGHT - 250))
     # Window outline
-    pygame.draw.rect(screen, (0,0,0), (150, 60, SCREEN_WIDTH - 300, SCREEN_HEIGHT - 240), 10)
+    pygame.draw.rect(screen, GREEN, (100, 100, SCREEN_WIDTH - 200, SCREEN_HEIGHT - 250), 5)
 
 def draw_hud():
-    # Fuel Gauge
-    pygame.draw.rect(screen, GREEN, (SCREEN_WIDTH - 50, SCREEN_HEIGHT - 20 - player_fuel / MAX_FUEL * 100, 30, player_fuel / MAX_FUEL * 100))
-    # Missile Count
-    font = pygame.font.Font(None, 36)
-    missile_text = font.render(f"Missiles: {player_missiles}", True, WHITE)
-    screen.blit(missile_text, (SCREEN_WIDTH - 150, 10))
-    # Key Count
-    key_text = font.render(f"Keys: {keys_collected_count}/2", True, YELLOW)
-    screen.blit(key_text, (SCREEN_WIDTH - 150, 50))
-    # Shield
-    shield_text = font.render(f"Shield: {int(player_shield)}", True, CYAN)
-    screen.blit(shield_text, (10, 10))
-    # Score
-    score_text = font.render(f"Score: {score}", True, WHITE)
-    screen.blit(score_text, (SCREEN_WIDTH / 2 - 50, 10))
-    # Date
-    date_text = font.render(f"Date: {date}", True, WHITE)
-    screen.blit(date_text, (SCREEN_WIDTH / 2 - 50, 50))
-
-def draw_map():
-    # Map (Bottom Left)
-    map_surface = pygame.Surface((200, 150))
-    map_surface.set_alpha(128)
-    map_surface.fill(BLACK)
+    font = pygame.font.Font(None, 30)
     
-    # Draw grid
-    for x in range(GRID_SIZE):
-        for y in range(GRID_SIZE):
-            pygame.draw.rect(map_surface, GREEN, (x * 25, y * 18, 25, 18), 1)
+    # --- Left Side ---
+    # Energy Gauge (as an arc)
+    energy_angle = (player_energy / MAX_ENERGY) * 180
+    pygame.draw.arc(screen, GREEN, (10, SCREEN_HEIGHT - 140, 80, 80), math.radians(180), math.radians(180 + energy_angle), 5)
+    energy_text = font.render("ENERGY", True, WHITE)
+    screen.blit(energy_text, (20, SCREEN_HEIGHT - 130))
 
-    # Draw bases
-    for base in bases:
-        pygame.draw.rect(map_surface, BLUE, (base['x'] * 25, base['y'] * 18, 25, 18))
+    # System Status
+    system_font = pygame.font.Font(None, 24)
+    for i, (system, health) in enumerate(ship_systems.items()):
+        color = GREEN if health > 50 else (YELLOW if health > 20 else RED)
+        text = system_font.render(f"{system.upper()}: {health}%", True, color)
+        screen.blit(text, (10, 110 + i * 25))
 
-    # Draw planets
-    for p in planets:
-        if p['has_key']:
-            pygame.draw.rect(map_surface, YELLOW, (p['x'] * 25 + 10, p['y'] * 18 + 6, 5, 5))
-        else:
-            pygame.draw.circle(map_surface, (100, 100, 255), (p['x'] * 25 + 12, p['y'] * 18 + 9), 3)
+    # --- Right Side ---
+    # Missile Count (as vertical bars)
+    missile_text = font.render("MISSILES", True, WHITE)
+    screen.blit(missile_text, (SCREEN_WIDTH - 95, SCREEN_HEIGHT - 130))
+    for i in range(player_missiles):
+        pygame.draw.rect(screen, CYAN, (SCREEN_WIDTH - 80 + (i * 10), SCREEN_HEIGHT - 100, 5, 20))
 
-    # Draw asteroid fields
-    for af in asteroid_fields:
-        pygame.draw.circle(map_surface, (128, 128, 128), (af['x'] * 25 + 12, af['y'] * 18 + 9), 5)
+    # --- Top Center ---
+    # Score
+    score_text = font.render(f"SCORE: {score}", True, WHITE)
+    score_rect = score_text.get_rect(center=(SCREEN_WIDTH/2, 30))
+    screen.blit(score_text, score_rect)
+    # High Score
+    high_score_text = font.render(f"HIGH: {high_score}", True, YELLOW)
+    high_score_rect = high_score_text.get_rect(center=(SCREEN_WIDTH/2, 60))
+    screen.blit(high_score_text, high_score_rect)
 
-    # Draw player
-    pygame.draw.circle(map_surface, YELLOW, (player_grid_x * 25 + 12, player_grid_y * 18 + 9), 3)
-
-    screen.blit(map_surface, (10, SCREEN_HEIGHT - 160))
+    # --- Bottom Center ---
+    # Date
+    date_text = font.render(f"DATE: {date}", True, WHITE)
+    date_rect = date_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT - 20))
+    screen.blit(date_text, date_rect)
+    # Keys
+    key_text = font.render(f"KEYS: {keys_collected_count}/7", True, YELLOW)
+    key_rect = key_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT - 50))
+    screen.blit(key_text, key_rect)
 
 def draw_radar():
-    # Radar (Bottom Right)
-    radar_surface = pygame.Surface((200, 150))
-    radar_surface.set_alpha(128)
-    radar_surface.fill(BLACK)
+    radar_x = SCREEN_WIDTH / 2
+    radar_y = SCREEN_HEIGHT - 75
+    radar_radius = 70
+    
+    # Radar dish
+    pygame.draw.circle(screen, (0, 50, 0), (radar_x, radar_y), radar_radius)
+    
+    if ship_systems['radar'] == 0:
+        # Radar is out
+        font = pygame.font.Font(None, 24)
+        text = font.render("RADAR OUT", True, RED)
+        text_rect = text.get_rect(center=(radar_x, radar_y))
+        screen.blit(text, text_rect)
+        return
+
+    # Radar sweep
+    sweep_angle = (pygame.time.get_ticks() % 3000) / 3000 * 360
+    sweep_end_x = radar_x + radar_radius * math.cos(math.radians(sweep_angle - 90))
+    sweep_end_y = radar_y + radar_radius * math.sin(math.radians(sweep_angle - 90))
+    pygame.draw.line(screen, GREEN, (radar_x, radar_y), (sweep_end_x, sweep_end_y), 2)
+
+    # Radar grid
+    pygame.draw.circle(screen, GREEN, (radar_x, radar_y), radar_radius, 1)
+    pygame.draw.circle(screen, GREEN, (radar_x, radar_y), radar_radius / 2, 1)
+    pygame.draw.line(screen, GREEN, (radar_x - radar_radius, radar_y), (radar_x + radar_radius, radar_y), 1)
+    pygame.draw.line(screen, GREEN, (radar_x, radar_y - radar_radius), (radar_x, radar_y + radar_radius), 1)
 
     # Player in center
-    pygame.draw.circle(radar_surface, GREEN, (100, 75), 2)
+    pygame.draw.circle(screen, YELLOW, (radar_x, radar_y), 3)
 
-    # Draw enemies
+    # Draw objects on radar
+    if ship_systems['radar'] < 20:
+        # Only player is visible
+        return
+
+    if ship_systems['radar'] < 50 and random.random() < 0.5:
+        # Flickering effect
+        return
+
+    # Enemies
     for enemy in enemies:
         if enemy['grid_x'] == player_grid_x and enemy['grid_y'] == player_grid_y:
-            rel_x = enemy['x'] / 10
-            rel_z = enemy['z'] / 10
+            # Calculate relative position
+            rel_x = enemy['x']
+            rel_z = enemy['z']
             
-            # rotate with player
+            # Rotate with player's view
             rotated_x = rel_x * math.cos(math.radians(player_angle)) - rel_z * math.sin(math.radians(player_angle))
             rotated_z = rel_x * math.sin(math.radians(player_angle)) + rel_z * math.cos(math.radians(player_angle))
 
-            if abs(rotated_x) < 100 and abs(rotated_z) < 75:
+            # Scale to radar
+            radar_dist = math.sqrt(rotated_x**2 + rotated_z**2)
+            if radar_dist < 500: # Only show enemies within a certain range
+                angle = math.atan2(rotated_x, -rotated_z)
+                display_dist = (radar_dist / 500) * radar_radius
+                
+                blip_x = radar_x + display_dist * math.sin(angle)
+                blip_y = radar_y + display_dist * math.cos(angle)
+                
                 if enemy['type'] == 'boss':
-                    pygame.draw.circle(radar_surface, MAGENTA, (100 + rotated_x, 75 + rotated_z), 3)
+                    color = MAGENTA
                 else:
-                    color = {'fighter': RED, 'bomber': ORANGE, 'cruiser': (200, 200, 200)}.get(enemy['type'], RED)
-                    pygame.draw.circle(radar_surface, color, (100 + rotated_x, 75 + rotated_z), 3)
+                    color = RED
+                pygame.draw.circle(screen, color, (blip_x, blip_y), 3)
 
-    screen.blit(radar_surface, (SCREEN_WIDTH - 210, SCREEN_HEIGHT - 160))
+
 
 def draw_warp_effect():
     screen.fill(BLACK)
@@ -449,21 +476,22 @@ while running:
                     if event.key == pygame.K_DOWN:
                         player_speed = -10
                 if event.key == pygame.K_w:
-                    warp_targeting = not warp_targeting
-                    if warp_targeting:
-                        target_grid_x = player_grid_x
-                        target_grid_y = player_grid_y
-                    else:
-                        dist = math.sqrt((target_grid_x - player_grid_x)**2 + (target_grid_y - player_grid_y)**2)
-                        fuel_cost = int(dist * 10)
-                        if player_fuel >= fuel_cost:
-                            if warp_sound: warp_sound.play()
-                            player_fuel -= fuel_cost
-                            date += int(dist)
-                            warp_effect = 10 # Start warp effect
-                            player_grid_x = target_grid_x
-                            player_grid_y = target_grid_y
-                            asteroids = []
+                    if ship_systems['computer'] >= 50:
+                        warp_targeting = not warp_targeting
+                        if not warp_targeting: # if we are turning warp off
+                            dist = math.sqrt((target_grid_x - player_grid_x)**2 + (target_grid_y - player_grid_y)**2)
+                            energy_cost = int(dist * 10)
+                            if player_energy >= energy_cost:
+                                if warp_sound: warp_sound.play()
+                                player_energy -= energy_cost
+                                date += int(dist)
+                                warp_effect = 10 # Start warp effect
+                                player_grid_x = target_grid_x
+                                player_grid_y = target_grid_y
+                                asteroids = []
+                        else: # if we are turning warp on
+                            target_grid_x = player_grid_x
+                            target_grid_y = player_grid_y
                             for af in asteroid_fields:
                                 if af['x'] == player_grid_x and af['y'] == player_grid_y:
                                     for _ in range(20):
@@ -480,9 +508,9 @@ while running:
                                 health = {'fighter': 10, 'bomber': 20, 'cruiser': 50}[enemy_type]
                                 enemies.append({'x': random.randint(-100, 100), 'y': random.randint(-100, 100), 'z': 500, 'type': enemy_type, 'grid_x': target_grid_x, 'grid_y': target_grid_y, 'health': health})
                 if event.key == pygame.K_SPACE:
-                    if player_fuel >= 10:
+                    if player_energy >= 10:
                         if laser_sound: laser_sound.play()
-                        player_fuel -= 10
+                        player_energy -= 10
                         bullets.append({'x': 0, 'y': 0, 'z': 0, 'vx': 0, 'vy': 0, 'vz': 40})
                 if event.key == pygame.K_n:
                     if player_missiles > 0:
@@ -492,9 +520,9 @@ while running:
                 if event.key == pygame.K_m:
                     game_state = 'map'
                 if event.key == pygame.K_h:
-                    if player_fuel >= 50:
+                    if ship_systems['computer'] > 0 and player_energy >= 50:
                         if warp_sound: warp_sound.play()
-                        player_fuel -= 50
+                        player_energy -= 50
                         date += 5
                         warp_effect = 10 # Start warp effect
                         player_grid_x = random.randint(0, GRID_SIZE - 1)
@@ -547,8 +575,15 @@ while running:
         # Update player rotation and position
         player_angle += player_rotation_speed
         
-        dx = -player_speed * math.sin(math.radians(player_angle))
-        dz = -player_speed * math.cos(math.radians(player_angle))
+        if ship_systems['engine'] == 0:
+            engine_efficiency = 0
+        elif ship_systems['engine'] < 50:
+            engine_efficiency = (ship_systems['engine'] / 100.0) * 0.5 # Max 25% efficiency
+        else:
+            engine_efficiency = ship_systems['engine'] / 100.0
+
+        dx = -player_speed * math.sin(math.radians(player_angle)) * engine_efficiency
+        dz = -player_speed * math.cos(math.radians(player_angle)) * engine_efficiency
 
         for star in stars:
             star[0] -= dx
@@ -642,7 +677,7 @@ while running:
                 if enemy in enemies: 
                     if shield_hit_sound: shield_hit_sound.play()
                     enemies.remove(enemy)
-                    player_shield -= 10
+                    player_energy -= 10
                     damage_effect = 10
 
 
@@ -706,60 +741,51 @@ while running:
             if dist < 20:
                 if shield_hit_sound: shield_hit_sound.play()
                 enemy_bullets.remove(bullet)
-                player_shield -= bullet.get('power', 5)
+                if random.random() < 0.3: # 30% chance to damage a system
+                    system_to_damage = random.choice(list(ship_systems.keys()))
+                    ship_systems[system_to_damage] -= 10
+                    if ship_systems[system_to_damage] < 0:
+                        ship_systems[system_to_damage] = 0
+                else:
+                    player_energy -= bullet.get('power', 5)
                 damage_effect = 10 # Red overlay
-                # Generate shield hit particles
-                for _ in range(10):
-                    shield_hit_particles.append({
-                        'x': 0, 'y': 0, 'z': 0, # Relative to player
-                        'vx': random.uniform(-5, 5),
-                        'vy': random.uniform(-5, 5),
-                        'vz': random.uniform(-5, 5),
-                        'color': CYAN,
-                        'size': random.randint(2, 4),
-                        'alpha': 255
-                    })
 
         # Asteroid Collision
         for asteroid in asteroids:
             dist = math.sqrt(asteroid['x']**2 + asteroid['y']**2 + asteroid['z']**2)
             if dist < asteroid['size']:
                 if shield_hit_sound: shield_hit_sound.play()
-                player_shield -= 10
+                if random.random() < 0.3: # 30% chance to damage a system
+                    system_to_damage = random.choice(list(ship_systems.keys()))
+                    ship_systems[system_to_damage] -= 20 # Asteroids do more damage
+                    if ship_systems[system_to_damage] < 0:
+                        ship_systems[system_to_damage] = 0
+                else:
+                    player_energy -= 10
                 damage_effect = 10 # Red overlay
-                # Generate shield hit particles
-                for _ in range(10):
-                    shield_hit_particles.append({
-                        'x': 0, 'y': 0, 'z': 0, # Relative to player
-                        'vx': random.uniform(-5, 5),
-                        'vy': random.uniform(-5, 5),
-                        'vz': random.uniform(-5, 5),
-                        'color': CYAN,
-                        'size': random.randint(2, 4),
-                        'alpha': 255
-                    })
                 asteroids.remove(asteroid)
 
         
         # Docking and refueling
         for base in bases:
             if player_grid_x == base['x'] and player_grid_y == base['y']:
-                player_fuel += 5
-                if player_fuel > MAX_FUEL:
-                    player_fuel = MAX_FUEL
+                player_energy += 5
+                if player_energy > MAX_ENERGY:
+                    player_energy = MAX_ENERGY
                 player_missiles = 5 # Refill missiles at base
-                player_shield = MAX_SHIELD # Recharge shields at base
+                # Repair systems
+                for system in ship_systems:
+                    if ship_systems[system] < 100:
+                        ship_systems[system] += 0.5
+                        if ship_systems[system] > 100:
+                            ship_systems[system] = 100
 
 
 
         # Check for game over
-        if player_fuel <= 0 or player_shield <= 0 or date >= MAX_DATE:
+        if player_energy <= 0 or date >= MAX_DATE:
             if game_over_sound: game_over_sound.play()
             game_state = 'lost'
-
-        # Shield regeneration
-        if player_shield < MAX_SHIELD:
-            player_shield += 0.1
 
         # Key Collection from planets
         for p in planets:
@@ -767,8 +793,11 @@ while running:
                 p['has_key'] = False
                 keys_collected_count += 1
                 # Spawn boss if all keys are collected
-                if keys_collected_count == 2:
-                    boss = {'x': random.randint(-100, 100), 'y': random.randint(-100, 100), 'z': 1000, 'type': 'boss', 'grid_x': random.randint(0, GRID_SIZE - 1), 'grid_y': random.randint(0, GRID_SIZE - 1), 'health': 100}
+                if keys_collected_count == 7:
+                    final_planet_x = random.randint(0, GRID_SIZE - 1)
+                    final_planet_y = random.randint(0, GRID_SIZE - 1)
+                    planets.append({'x': final_planet_x, 'y': final_planet_y, 'has_key': False, 'is_final': True})
+                    boss = {'x': random.randint(-100, 100), 'y': random.randint(-100, 100), 'z': 1000, 'type': 'boss', 'grid_x': final_planet_x, 'grid_y': final_planet_y, 'health': 100}
                     enemies.append(boss)
 
 
@@ -845,42 +874,38 @@ while running:
             if 0 <= x < SCREEN_WIDTH and 0 <= y < SCREEN_HEIGHT:
                 size = (1 - enemy['z'] / SCREEN_WIDTH) * 20
                 if enemy['type'] == 'fighter':
-                    # More detailed fighter shape
+                    # T-shape fighter
                     points = [
-                        (x, y - size), 
-                        (x - size, y + size), 
-                        (x, y + size / 2), 
-                        (x + size, y + size)
+                        (x - size, y - size / 3),
+                        (x + size, y - size / 3),
+                        (x + size, y + size / 3),
+                        (x - size, y + size / 3),
                     ]
-                    pygame.draw.polygon(screen, RED, points)
+                    pygame.draw.polygon(screen, RED, points, 1)
+                    pygame.draw.line(screen, RED, (x, y - size / 3), (x, y + size), 1)
                 elif enemy['type'] == 'bomber':
-                    # Bulkier bomber shape
+                    # Wide bomber
                     points = [
-                        (x - size, y - size / 2),
-                        (x + size, y - size / 2),
-                        (x + size * 1.2, y + size / 2),
-                        (x - size * 1.2, y + size / 2)
+                        (x - size * 1.5, y - size / 2),
+                        (x + size * 1.5, y - size / 2),
+                        (x + size, y + size / 2),
+                        (x - size, y + size / 2),
                     ]
-                    pygame.draw.polygon(screen, ORANGE, points)
+                    pygame.draw.polygon(screen, ORANGE, points, 1)
                 elif enemy['type'] == 'cruiser':
-                    # Long and thin cruiser
+                    # Cruiser with wings
                     points = [
-                        (x, y - size * 1.5),
-                        (x - size / 2, y + size * 1.5),
-                        (x + size / 2, y + size * 1.5)
+                        (x, y - size),
+                        (x - size * 2, y + size),
+                        (x + size * 2, y + size),
                     ]
-                    pygame.draw.polygon(screen, (200, 200, 200), points)
+                    pygame.draw.polygon(screen, (200, 200, 200), points, 1)
+                    pygame.draw.line(screen, (200, 200, 200), (x, y - size), (x, y + size), 1)
                 elif enemy['type'] == 'boss':
-                    # Complex boss shape
-                    pygame.draw.circle(screen, MAGENTA, (x, y), size * 1.5)
-                    pygame.draw.circle(screen, WHITE, (x, y), size)
-                    points = [
-                        (x, y - size * 2),
-                        (x - size * 1.5, y),
-                        (x, y + size * 2),
-                        (x + size * 1.5, y)
-                    ]
-                    pygame.draw.polygon(screen, MAGENTA, points, 5)
+                    # More complex boss
+                    pygame.draw.rect(screen, MAGENTA, (x - size, y - size, size * 2, size * 2), 1)
+                    pygame.draw.line(screen, MAGENTA, (x - size, y - size), (x + size, y + size), 1)
+                    pygame.draw.line(screen, MAGENTA, (x + size, y - size), (x - size, y + size), 1)
 
 
 
@@ -892,9 +917,8 @@ while running:
 
             if 0 <= x < SCREEN_WIDTH and 0 <= y < SCREEN_HEIGHT:
                 start_pos = (x, y)
-                end_pos = (x, y - 30)
-                pygame.draw.line(screen, YELLOW, start_pos, end_pos, 7)
-                pygame.draw.line(screen, WHITE, start_pos, end_pos, 4)
+                end_pos = (x, y - 10)
+                pygame.draw.line(screen, YELLOW, start_pos, end_pos, 2)
 
 
         # Draw Missiles
@@ -904,7 +928,7 @@ while running:
             y = int(missile['y'] * k + SCREEN_HEIGHT / 2)
 
             if 0 <= x < SCREEN_WIDTH and 0 <= y < SCREEN_HEIGHT:
-                pygame.draw.rect(screen, CYAN, (x-2, y-5, 4, 10))
+                pygame.draw.rect(screen, CYAN, (x-2, y-5, 4, 10), 1)
 
         # Draw Enemy Bullets
         for bullet in enemy_bullets:
@@ -924,19 +948,7 @@ while running:
             y = int(explosion['y'] * k + SCREEN_HEIGHT / 2)
             
             if 0 <= x < SCREEN_WIDTH and 0 <= y < SCREEN_HEIGHT:
-                s = pygame.Surface((explosion['radius']*2, explosion['radius']*2), pygame.SRCALPHA)
-                pygame.draw.circle(s, (255, 165, 0, explosion['alpha']), (explosion['radius'], explosion['radius']), explosion['radius'])
-                screen.blit(s, (x - explosion['radius'], y - explosion['radius']))
-
-                # Draw particles
-                for particle in explosion['particles']:
-                    k_p = 128.0 / (explosion['z'] + particle['z']) if (explosion['z'] + particle['z']) != 0 else 128.0
-                    x_p = int((explosion['x'] + particle['x']) * k_p + SCREEN_WIDTH / 2)
-                    y_p = int((explosion['y'] + particle['y']) * k_p + SCREEN_HEIGHT / 2)
-
-                    if 0 <= x_p < SCREEN_WIDTH and 0 <= y_p < SCREEN_HEIGHT:
-                        p_color = (particle['color'][0], particle['color'][1], particle['color'][2], max(0, particle['alpha']))
-                        pygame.draw.circle(screen, p_color, (x_p, y_p), particle['size'])
+                pygame.draw.circle(screen, ORANGE, (x, y), explosion['radius'], 1)
 
         # Draw damage effect
         if damage_effect > 0:
@@ -946,28 +958,12 @@ while running:
             damage_effect -= 1
 
         # Update and Draw Shield Hit Particles
-        for particle in shield_hit_particles:
-            particle['x'] += particle['vx']
-            particle['y'] += particle['vy']
-            particle['z'] += particle['vz']
-            particle['alpha'] -= 15
-            if particle['alpha'] <= 0:
-                shield_hit_particles.remove(particle)
-                continue
 
-            k_p = 128.0 / (particle['z']) if (particle['z']) != 0 else 128.0
-            x_p = int((particle['x']) * k_p + SCREEN_WIDTH / 2)
-            y_p = int((particle['y']) * k_p + SCREEN_HEIGHT / 2)
-
-            if 0 <= x_p < SCREEN_WIDTH and 0 <= y_p < SCREEN_HEIGHT:
-                p_color = (particle['color'][0], particle['color'][1], particle['color'][2], max(0, particle['alpha']))
-                pygame.draw.circle(screen, p_color, (x_p, y_p), particle['size'])
 
 
         # Draw Cockpit
         draw_cockpit_frame()
         draw_hud()
-        draw_map()
         draw_radar()
     elif game_state == 'map':
         draw_star_map()
