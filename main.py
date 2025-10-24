@@ -314,30 +314,15 @@ def draw_cockpit_frame():
     # Window outline
     pygame.draw.rect(screen, GREEN, (100, 100, SCREEN_WIDTH - 200, SCREEN_HEIGHT - 250), 5)
 
+    # Add some details to the cockpit
+    pygame.draw.line(screen, GREEN, (100, 100), (150, 150), 5)
+    pygame.draw.line(screen, GREEN, (SCREEN_WIDTH - 100, 100), (SCREEN_WIDTH - 150, 150), 5)
+    pygame.draw.line(screen, GREEN, (100, SCREEN_HEIGHT - 150), (150, SCREEN_HEIGHT - 200), 5)
+    pygame.draw.line(screen, GREEN, (SCREEN_WIDTH - 100, SCREEN_HEIGHT - 150), (SCREEN_WIDTH - 150, SCREEN_HEIGHT - 200), 5)
+
 def draw_hud():
     font = pygame.font.Font(None, 30)
     
-    # --- Left Side ---
-    # Energy Gauge (as an arc)
-    energy_angle = (player_energy / MAX_ENERGY) * 180
-    pygame.draw.arc(screen, GREEN, (10, SCREEN_HEIGHT - 140, 80, 80), math.radians(180), math.radians(180 + energy_angle), 5)
-    energy_text = font.render("ENERGY", True, WHITE)
-    screen.blit(energy_text, (20, SCREEN_HEIGHT - 130))
-
-    # System Status
-    system_font = pygame.font.Font(None, 24)
-    for i, (system, health) in enumerate(ship_systems.items()):
-        color = GREEN if health > 50 else (YELLOW if health > 20 else RED)
-        text = system_font.render(f"{system.upper()}: {health}%", True, color)
-        screen.blit(text, (10, 110 + i * 25))
-
-    # --- Right Side ---
-    # Missile Count (as vertical bars)
-    missile_text = font.render("MISSILES", True, WHITE)
-    screen.blit(missile_text, (SCREEN_WIDTH - 95, SCREEN_HEIGHT - 130))
-    for i in range(player_missiles):
-        pygame.draw.rect(screen, CYAN, (SCREEN_WIDTH - 80 + (i * 10), SCREEN_HEIGHT - 100, 5, 20))
-
     # --- Top Center ---
     # Score
     score_text = font.render(f"SCORE: {score}", True, WHITE)
@@ -348,6 +333,20 @@ def draw_hud():
     high_score_rect = high_score_text.get_rect(center=(SCREEN_WIDTH/2, 60))
     screen.blit(high_score_text, high_score_rect)
 
+    # --- Bottom Left ---
+    # Energy Gauge (as an arc)
+    energy_angle = (player_energy / MAX_ENERGY) * 180
+    pygame.draw.arc(screen, GREEN, (10, SCREEN_HEIGHT - 140, 80, 80), math.radians(180), math.radians(180 + energy_angle), 5)
+    energy_text = font.render("ENERGY", True, WHITE)
+    screen.blit(energy_text, (20, SCREEN_HEIGHT - 130))
+
+    # --- Bottom Right ---
+    # Missile Count (as vertical bars)
+    missile_text = font.render("MISSILES", True, WHITE)
+    screen.blit(missile_text, (SCREEN_WIDTH - 95, SCREEN_HEIGHT - 130))
+    for i in range(player_missiles):
+        pygame.draw.rect(screen, CYAN, (SCREEN_WIDTH - 80 + (i * 10), SCREEN_HEIGHT - 100, 5, 20))
+
     # --- Bottom Center ---
     # Date
     date_text = font.render(f"DATE: {date}", True, WHITE)
@@ -357,6 +356,14 @@ def draw_hud():
     key_text = font.render(f"KEYS: {keys_collected_count}/7", True, YELLOW)
     key_rect = key_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT - 50))
     screen.blit(key_text, key_rect)
+
+    # --- Left Side ---
+    # System Status
+    system_font = pygame.font.Font(None, 24)
+    for i, (system, health) in enumerate(ship_systems.items()):
+        color = GREEN if health > 50 else (YELLOW if health > 20 else RED)
+        text = system_font.render(f"{system.upper()}: {health}%", True, color)
+        screen.blit(text, (10, 110 + i * 25))
 
 def draw_radar():
     radar_x = SCREEN_WIDTH / 2
@@ -423,6 +430,11 @@ def draw_radar():
                 else:
                     color = RED
                 pygame.draw.circle(screen, color, (blip_x, blip_y), 3)
+
+    # Target Reticle
+    reticle_size = 20
+    pygame.draw.line(screen, GREEN, (SCREEN_WIDTH/2 - reticle_size, SCREEN_HEIGHT/2), (SCREEN_WIDTH/2 + reticle_size, SCREEN_HEIGHT/2), 1)
+    pygame.draw.line(screen, GREEN, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - reticle_size), (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + reticle_size), 1)
 
 
 
@@ -646,9 +658,16 @@ while running:
                     if game_over_sound: game_over_sound.play()
                     game_state = 'lost'
             elif enemy['type'] == 'fighter':
-                enemy['z'] -= 0.5 # Fighters are faster
+                # Fighters will try to flank the player
+                if enemy['z'] > 200:
+                    enemy['z'] -= 2
+                else:
+                    if enemy['x'] < 0:
+                        enemy['x'] -= 1
+                    else:
+                        enemy['x'] += 1
                 # Fighters shoot at the player
-                if random.random() < 0.01:
+                if random.random() < 0.02:
                     enemy_bullets.append({'x': enemy['x'], 'y': enemy['y'], 'z': enemy['z'], 'vx': 0, 'vy': 0, 'vz': -10})
             elif enemy['type'] == 'bomber':
                 base_in_sector = None
@@ -670,7 +689,7 @@ while running:
             elif enemy['type'] == 'cruiser':
                 enemy['z'] -= 0.1 # Cruisers are slow
                 # Cruisers shoot powerful shots less frequently
-                if random.random() < 0.005:
+                if random.random() < 0.01:
                     enemy_bullets.append({'x': enemy['x'], 'y': enemy['y'], 'z': enemy['z'], 'vx': 0, 'vy': 0, 'vz': -5, 'power': 20}) # More power
 
             if enemy['z'] < 0:
