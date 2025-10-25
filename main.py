@@ -92,7 +92,8 @@ target_cursor_x = 0
 target_cursor_y = 0
 
 # Grid
-GRID_SIZE = 8
+GRID_SIZE = 16
+sector_types = [['empty' for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
 
 # Starfield
 stars = []
@@ -138,15 +139,15 @@ def load_high_score():
         return 0
 
 def reset_game(mode='adventure'):
-    global player_angle, player_rotation_speed, player_speed, player_grid_x, player_grid_y, player_energy, player_missiles, game_state, warp_targeting, target_grid_x, target_grid_y, stars, bullets, missiles, explosions, enemy_bullets, enemies, bases, score, planets, keys_collected_count, boss, date, target_cursor_x, target_cursor_y, asteroid_fields, asteroids, shield_hit_particles, ship_systems
+    global player_angle, player_rotation_speed, player_speed, player_grid_x, player_grid_y, player_energy, player_missiles, game_state, warp_targeting, target_grid_x, target_grid_y, stars, bullets, missiles, explosions, enemy_bullets, enemies, bases, score, planets, keys_collected_count, boss, date, target_cursor_x, target_cursor_y, asteroid_fields, asteroids, shield_hit_particles, ship_systems, sector_types
     player_angle = 0
     player_rotation_speed = 0
     player_speed = 0
-    player_grid_x = 4
-    player_grid_y = 4
+    player_grid_x = 8
+    player_grid_y = 8
     player_energy = 1000
     player_missiles = 5
-    ship_systems = {'radar': 100, 'computer': 100, 'engine': 100}
+    ship_systems = {'radar': 100, 'computer': 100, 'engine': 100, 'life_support': 100, 'targeting_computer': 100}
     score = 0
     game_state = 'playing' # Always start in playing state after menu selection
     warp_targeting = False
@@ -169,13 +170,27 @@ def reset_game(mode='adventure'):
     enemies = []
     bases = []
     bases.append({'x': 1, 'y': 1, 'health': 100})
-    bases.append({'x': 6, 'y': 6, 'health': 100})
+    bases.append({'x': 14, 'y': 14, 'health': 100})
     planets = []
     keys_collected_count = 0
     boss = None
     date = 0
     asteroid_fields = []
     shield_hit_particles = []
+    sector_types = [['empty' for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+
+    # Generate nebulas
+    for _ in range(5):
+        nx = random.randint(0, GRID_SIZE - 1)
+        ny = random.randint(0, GRID_SIZE - 1)
+        sector_types[nx][ny] = 'nebula'
+
+    # Generate asteroid fields
+    for _ in range(10):
+        ax = random.randint(0, GRID_SIZE - 1)
+        ay = random.randint(0, GRID_SIZE - 1)
+        if sector_types[ax][ay] == 'empty':
+            sector_types[ax][ay] = 'asteroid_field'
 
     if mode == 'adventure':
         # Create 7 planets with keys
@@ -248,12 +263,17 @@ def draw_star_map():
     # Draw grid
     for x in range(GRID_SIZE):
         for y in range(GRID_SIZE):
-            pygame.draw.rect(screen, GREEN, (x * 100, y * 75, 100, 75), 1)
+            if sector_types[x][y] == 'nebula':
+                pygame.draw.rect(screen, (50, 50, 100), (x * 50, y * 37.5, 50, 37.5))
+            elif sector_types[x][y] == 'asteroid_field':
+                pygame.draw.rect(screen, (100, 100, 100), (x * 50, y * 37.5, 50, 37.5))
+            else:
+                pygame.draw.rect(screen, GREEN, (x * 50, y * 37.5, 50, 37.5), 1)
 
     # Draw bases
     for base in bases:
-        base_map_x = base['x'] * 100 + 50
-        base_map_y = base['y'] * 75 + 37
+        base_map_x = base['x'] * 50 + 25
+        base_map_y = base['y'] * 37.5 + 18.75
         health_ratio = base['health'] / 100.0
         if health_ratio > 0.5:
             color = BLUE
@@ -265,22 +285,16 @@ def draw_star_map():
 
     # Draw planets
     for p in planets:
-        planet_map_x = p['x'] * 100 + 50
-        planet_map_y = p['y'] * 75 + 37
+        planet_map_x = p['x'] * 50 + 25
+        planet_map_y = p['y'] * 37.5 + 18.75
         if p['has_key']:
             pygame.draw.rect(screen, YELLOW, (planet_map_x - 5, planet_map_y - 5, 10, 10))
         elif p.get('is_final'):
             pygame.draw.circle(screen, MAGENTA, (planet_map_x, planet_map_y), 12)
 
-    # Draw asteroid fields
-    for af in asteroid_fields:
-        af_map_x = af['x'] * 100 + 50
-        af_map_y = af['y'] * 75 + 37
-        pygame.draw.circle(screen, (128, 128, 128), (af_map_x, af_map_y), 10)
-
     # Draw player
-    player_map_x = player_grid_x * 100 + 50
-    player_map_y = player_grid_y * 75 + 37
+    player_map_x = player_grid_x * 50 + 25
+    player_map_y = player_grid_y * 37.5 + 18.75
     pygame.draw.circle(screen, YELLOW, (player_map_x, player_map_y), 5)
     heading_x = player_map_x + 20 * math.sin(math.radians(player_angle))
     heading_y = player_map_y - 20 * math.cos(math.radians(player_angle))
@@ -288,8 +302,8 @@ def draw_star_map():
 
     # Draw enemies
     for enemy in enemies:
-        enemy_map_x = enemy['grid_x'] * 100 + 50
-        enemy_map_y = enemy['grid_y'] * 75 + 37
+        enemy_map_x = enemy['grid_x'] * 50 + 25
+        enemy_map_y = enemy['grid_y'] * 37.5 + 18.75
         if enemy['type'] == 'fighter':
             pygame.draw.circle(screen, RED, (enemy_map_x, enemy_map_y), 3)
         elif enemy['type'] == 'bomber':
@@ -298,7 +312,7 @@ def draw_star_map():
             pygame.draw.circle(screen, MAGENTA, (enemy_map_x, enemy_map_y), 8)
 
     # Draw cursor
-    pygame.draw.rect(screen, WHITE, (target_cursor_x * 100, target_cursor_y * 75, 100, 75), 2)
+    pygame.draw.rect(screen, WHITE, (target_cursor_x * 50, target_cursor_y * 37.5, 50, 37.5), 2)
 
 
 
@@ -523,7 +537,8 @@ while running:
                     if player_energy >= 10:
                         if laser_sound: laser_sound.play()
                         player_energy -= 10
-                        bullets.append({'x': 0, 'y': 0, 'z': 0, 'vx': 0, 'vy': 0, 'vz': 40})
+                        accuracy_offset = (100 - ship_systems['targeting_computer']) / 1000
+                        bullets.append({'x': 0, 'y': 0, 'z': 0, 'vx': random.uniform(-accuracy_offset, accuracy_offset), 'vy': random.uniform(-accuracy_offset, accuracy_offset), 'vz': 40})
                 if event.key == pygame.K_n:
                     if player_missiles > 0:
                         if missile_sound: missile_sound.play()
@@ -584,6 +599,12 @@ while running:
                     game_state = 'menu' # Go back to menu after game over
 
     if game_state == 'playing':
+        # Life support
+        if ship_systems['life_support'] > 0:
+            player_energy -= 0.01 * (100 / ship_systems['life_support'])
+        else:
+            player_energy -= 0.1
+
         # Update player rotation and position
         player_angle += player_rotation_speed
         
@@ -593,6 +614,9 @@ while running:
             engine_efficiency = (ship_systems['engine'] / 100.0) * 0.5 # Max 25% efficiency
         else:
             engine_efficiency = ship_systems['engine'] / 100.0
+
+        if sector_types[player_grid_x][player_grid_y] == 'nebula':
+            engine_efficiency *= 0.5 # Reduce speed in nebula
 
         dx = -player_speed * math.sin(math.radians(player_angle)) * engine_efficiency
         dz = -player_speed * math.cos(math.radians(player_angle)) * engine_efficiency
@@ -607,10 +631,24 @@ while running:
             asteroid['x'] -= dx
             asteroid['z'] -= dz
 
+        if sector_types[player_grid_x][player_grid_y] == 'asteroid_field':
+            if random.random() < 0.1:
+                if shield_hit_sound: shield_hit_sound.play()
+                if random.random() < 0.3: # 30% chance to damage a system
+                    system_to_damage = random.choice(list(ship_systems.keys()))
+                    ship_systems[system_to_damage] -= 10 # Asteroids do more damage
+                    if ship_systems[system_to_damage] < 0:
+                        ship_systems[system_to_damage] = 0
+                else:
+                    player_energy -= 10
+                damage_effect = 10 # Red overlay
+
 
 
         # Update bullets and missiles
         for projectile in bullets + missiles:
+            projectile['x'] += projectile['vx']
+            projectile['y'] += projectile['vy']
             projectile['z'] += projectile['vz']
             if projectile['z'] > 1000:
                 if projectile in bullets:
@@ -746,6 +784,11 @@ while running:
                         elif enemy['type'] == 'cruiser':
                             score += 50
                         enemies.remove(enemy)
+
+                        # Check if all enemies in the sector are destroyed
+                        sector_enemies = [e for e in enemies if e['grid_x'] == player_grid_x and e['grid_y'] == player_grid_y]
+                        if not sector_enemies:
+                            score += 100 # Bonus for clearing the sector
 
                     if projectile in bullets:
                         bullets.remove(projectile)
@@ -988,6 +1031,8 @@ while running:
         draw_star_map()
     
     elif game_state == 'won':
+        if date < 500:
+            score += (500 - date) * 10 # Time bonus
         font = pygame.font.Font(None, 100)
         text = font.render("YOU WIN!", True, YELLOW)
         text_rect = text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
