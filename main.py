@@ -3,16 +3,24 @@ import random
 import math
 import os
 
-def save_high_score(score):
-    with open("highscore.txt", "w") as f:
-        f.write(str(score))
-
-def load_high_score():
+def handle_high_scores(score):
+    high_scores = []
     try:
         with open("highscore.txt", "r") as f:
-            return int(f.read())
+            high_scores = [int(line.strip()) for line in f.readlines()]
     except FileNotFoundError:
-        return 0
+        pass
+
+    high_scores.append(score)
+    high_scores.sort(reverse=True)
+    high_scores = high_scores[:10] # Keep only the top 10 scores
+
+    with open("highscore.txt", "w") as f:
+        for s in high_scores:
+            f.write(str(s) + "\n")
+
+    return high_scores
+
 
 
 # Initialize Pygame
@@ -71,7 +79,7 @@ MAX_ENERGY = 1000
 player_missiles = 5
 ship_systems = {'radar': 100, 'computer': 100, 'engine': 100}
 score = 0
-high_score = load_high_score()
+high_score = 0
 
 # Planets
 planets = []
@@ -79,7 +87,7 @@ keys_collected_count = 0
 boss = None
 
 # Game State
-game_state = 'menu' # playing, won, lost, map, menu
+game_state = 'title' # title, playing, won, lost, map, menu
 warp_targeting = False
 target_grid_x = player_grid_x
 target_grid_y = player_grid_y
@@ -130,7 +138,6 @@ bases = []
 bases.append({'x': 1, 'y': 1, 'health': 100})
 
 
-
 def load_high_score():
     try:
         with open("highscore.txt", "r") as f:
@@ -139,7 +146,7 @@ def load_high_score():
         return 0
 
 def reset_game(mode='adventure'):
-    global player_angle, player_rotation_speed, player_speed, player_grid_x, player_grid_y, player_energy, player_missiles, game_state, warp_targeting, target_grid_x, target_grid_y, stars, bullets, missiles, explosions, enemy_bullets, enemies, bases, score, planets, keys_collected_count, boss, date, target_cursor_x, target_cursor_y, asteroid_fields, asteroids, shield_hit_particles, ship_systems, sector_types
+    global player_angle, player_rotation_speed, player_speed, player_grid_x, player_grid_y, player_energy, player_missiles, game_state, warp_targeting, target_grid_x, target_grid_y, stars, bullets, missiles, explosions, enemy_bullets, enemies, bases, score, planets, keys_collected_count, boss, date, target_cursor_x, target_cursor_y, asteroid_fields, asteroids, shield_hit_particles, ship_systems, sector_types, high_score
     player_angle = 0
     player_rotation_speed = 0
     player_speed = 0
@@ -178,6 +185,12 @@ def reset_game(mode='adventure'):
     asteroid_fields = []
     shield_hit_particles = []
     sector_types = [['empty' for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+
+    try:
+        with open("highscore.txt", "r") as f:
+            high_score = int(f.readline().strip())
+    except (FileNotFoundError, ValueError):
+        high_score = 0
 
     # Generate nebulas
     for _ in range(5):
@@ -257,6 +270,18 @@ def reset_game(mode='adventure'):
         bases = []
         asteroid_fields = []
 
+def draw_title_screen():
+    screen.fill(BLACK)
+    font = pygame.font.Font(None, 100)
+    text = font.render("STAR SHOOTER", True, YELLOW)
+    text_rect = text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 150))
+    screen.blit(text, text_rect)
+
+    font = pygame.font.Font(None, 50)
+    text = font.render("Press any key to start", True, WHITE)
+    text_rect = text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
+    screen.blit(text, text_rect)
+
 def draw_star_map():
     screen.fill(BLACK)
     
@@ -313,7 +338,6 @@ def draw_star_map():
 
     # Draw cursor
     pygame.draw.rect(screen, WHITE, (target_cursor_x * 50, target_cursor_y * 37.5, 50, 37.5), 2)
-
 
 
 def draw_cockpit_frame():
@@ -451,7 +475,6 @@ def draw_radar():
     pygame.draw.line(screen, GREEN, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - reticle_size), (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + reticle_size), 1)
 
 
-
 def draw_warp_effect():
     screen.fill(BLACK)
     for star in stars:
@@ -481,7 +504,10 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if game_state == 'playing':
+        if game_state == 'title':
+            if event.type == pygame.KEYDOWN:
+                game_state = 'menu'
+        elif game_state == 'playing':
             if event.type == pygame.KEYDOWN:
                 if warp_targeting:
                     if event.key == pygame.K_LEFT:
@@ -1039,27 +1065,33 @@ while running:
         screen.blit(text, text_rect)
     
     elif game_state == 'lost':
-        if score > high_score:
-            high_score = score
-            save_high_score(high_score)
+        high_scores = handle_high_scores(score)
 
         font = pygame.font.Font(None, 100)
         text = font.render("GAME OVER", True, RED)
-        text_rect = text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 100))
+        text_rect = text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 200))
         screen.blit(text, text_rect)
 
         font = pygame.font.Font(None, 50)
         score_text = font.render(f"Score: {score}", True, WHITE)
-        score_rect = score_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
+        score_rect = score_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 100))
         screen.blit(score_text, score_rect)
 
-        high_score_text = font.render(f"High Score: {high_score}", True, WHITE)
-        high_score_rect = high_score_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 50))
-        screen.blit(high_score_text, high_score_rect)
+        high_score_title_text = font.render("High Scores", True, YELLOW)
+        high_score_title_rect = high_score_title_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 50))
+        screen.blit(high_score_title_text, high_score_title_rect)
+
+        for i, high_score in enumerate(high_scores):
+            high_score_text = font.render(f"{i+1}. {high_score}", True, WHITE)
+            high_score_rect = high_score_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + i * 40))
+            screen.blit(high_score_text, high_score_rect)
 
         restart_text = font.render("Press R to Restart", True, WHITE)
-        restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 100))
+        restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + len(high_scores) * 40 + 50))
         screen.blit(restart_text, restart_rect)
+    
+    elif game_state == 'title':
+        draw_title_screen()
 
     elif game_state == 'menu':
         screen.fill(BLACK)

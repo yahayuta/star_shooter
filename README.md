@@ -6,7 +6,7 @@ Star Shooter is a retro-inspired 3D space shooter game developed using Pygame. N
 
 *   **First-Person 3D Perspective:** Experience space combat from within your immersive cockpit.
 *   **Dynamic Starfield:** A visually engaging starfield with twinkling, multi-colored stars that reacts to your movement.
-*   **Grid-Based Exploration:** Navigate a universe divided into sectors, each with its own challenges and resources, including planets and asteroid fields.
+*   **Grid-Based Exploration:** Navigate a 16x16 universe divided into sectors, each with its own challenges and resources, including planets, nebulas and asteroid fields.
 *   **Resource Management:** Keep an eye on your fuel levels, which deplete with movement, combat, and warping. Refuel at friendly starbases.
 *   **Dual Weapon System:** Engage enemies with rapid-fire lasers or powerful, limited-supply missiles.
 *   **Long-Range Missiles:** Fire missiles at enemies on the galactic map for strategic advantage.
@@ -17,6 +17,7 @@ Star Shooter is a retro-inspired 3D space shooter game developed using Pygame. N
 *   **Shield Hit Effect:** A visual effect with particles when the player's shield is hit.
 *   **Date/Time System:** An in-game date that advances with actions, adding a time-based challenge.
 *   **Win/Loss Conditions:** Collect all keys from planets to summon the boss, defeat it to win, or face defeat if your fuel runs out, the boss reaches you, or the maximum date is exceeded.
+*   **Complex Scoring System:** Earn bonuses for clearing sectors of enemies and for completing the game quickly.
 
 ## Installation
 
@@ -71,7 +72,7 @@ Your view is from the cockpit of your starfighter, the "Gaia". The cockpit provi
 *   **Main Viewport:** Your primary view of the 3D space in front of your ship.
 *   **Energy Gauge (Bottom Left):** An arc-shaped gauge that displays your remaining energy. Energy is consumed by firing weapons, warping, and taking damage.
 *   **Missile Count (Bottom Right):** A series of vertical bars indicating your remaining missiles.
-*   **System Status (Top Left):** Shows the current status of your ship's critical systems: Radar, Computer, and Engine. The health of each system is displayed as a percentage, and the color changes from green to yellow to red as damage is sustained.
+*   **System Status (Top Left):** Shows the current status of your ship's critical systems: Radar, Computer, Engine, Life Support, and Targeting Computer. The health of each system is displayed as a percentage, and the color changes from green to yellow to red as damage is sustained.
 *   **Score & High Score (Top Center):** Your current score and the high score.
 *   **Date (Bottom Center):** The in-game date, which advances with actions like warping. Be mindful of the date, as some events may be time-sensitive.
 *   **Key Count (Bottom Center):** Shows how many keys you have collected out of the required 7 in Adventure Mode.
@@ -82,13 +83,23 @@ Your view is from the cockpit of your starfighter, the "Gaia". The cockpit provi
 
 ### Damage and Repairs
 
-Your ship has three critical systems that can be damaged by enemy fire or collisions with asteroids:
+Your ship has five critical systems that can be damaged by enemy fire or collisions with asteroids:
 
 *   **Radar:** Damage to the radar will cause it to malfunction. At moderate damage, it may flicker or only show your position. At critical damage, it will be completely disabled.
 *   **Computer:** A damaged computer will affect your ability to warp. At moderate damage, you will lose the ability to perform targeted warps. At critical damage, all warp functions will be disabled.
 *   **Engine:** Engine damage will reduce your ship's speed and maneuverability. At critical damage, your ship will be unable to move.
+*   **Life Support:** Damage to your life support system will cause your energy to drain at a faster rate.
+*   **Targeting Computer:** A damaged targeting computer will reduce the accuracy of your weapons.
 
 To repair your systems and replenish your energy and missiles, you must dock at a friendly **starbase** (indicated by a blue square on the galactic map).
+
+### Sector Types
+
+The galaxy is divided into different types of sectors, each with its own unique challenges:
+
+*   **Empty Space:** The most common type of sector. No special effects.
+*   **Nebula:** A dense cloud of gas and dust that will slow down your ship.
+*   **Asteroid Field:** A dangerous sector filled with asteroids that will damage your ship if you collide with them.
 
 ### Enemies
 
