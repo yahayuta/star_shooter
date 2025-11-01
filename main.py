@@ -74,8 +74,10 @@ player_rotation_speed = 0
 player_speed = 0
 player_grid_x = 4
 player_grid_y = 4
-player_energy = 1000
-MAX_ENERGY = 1000
+player_fuel = 1000
+MAX_FUEL = 1500
+player_shields = 100
+MAX_SHIELDS = 150
 player_missiles = 5
 ship_systems = {'radar': 100, 'computer': 100, 'engine': 100}
 score = 0
@@ -92,7 +94,7 @@ warp_targeting = False
 target_grid_x = player_grid_x
 target_grid_y = player_grid_y
 date = 0
-MAX_DATE = 1000
+MAX_DATE = 1500
 asteroid_fields = []
 asteroids = []
 shield_hit_particles = []
@@ -100,7 +102,7 @@ target_cursor_x = 0
 target_cursor_y = 0
 
 # Grid
-GRID_SIZE = 16
+GRID_SIZE = 8
 sector_types = [['empty' for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
 
 # Starfield
@@ -129,8 +131,8 @@ enemy_bullets = []
 
 # Enemies
 enemies = []
-enemy_type = random.choice(['fighter', 'bomber', 'cruiser'])
-health = {'fighter': 10, 'bomber': 20, 'cruiser': 50}[enemy_type]
+enemy_type = random.choice(['batte', 'gol', 'demo'])
+health = {'batte': 7, 'gol': 15, 'demo': 30}[enemy_type]
 enemies.append({'x': 0, 'y': 0, 'z': 200, 'type': enemy_type, 'grid_x': player_grid_x, 'grid_y': player_grid_y, 'health': health}) # Add one enemy
 
 # Bases
@@ -146,15 +148,16 @@ def load_high_score():
         return 0
 
 def reset_game(mode='adventure'):
-    global player_angle, player_rotation_speed, player_speed, player_grid_x, player_grid_y, player_energy, player_missiles, game_state, warp_targeting, target_grid_x, target_grid_y, stars, bullets, missiles, explosions, enemy_bullets, enemies, bases, score, planets, keys_collected_count, boss, date, target_cursor_x, target_cursor_y, asteroid_fields, asteroids, shield_hit_particles, ship_systems, sector_types, high_score
+    global player_angle, player_rotation_speed, player_speed, player_grid_x, player_grid_y, player_fuel, player_shields, player_missiles, game_state, warp_targeting, target_grid_x, target_grid_y, stars, bullets, missiles, explosions, enemy_bullets, enemies, bases, score, planets, keys_collected_count, boss, date, target_cursor_x, target_cursor_y, asteroid_fields, asteroids, shield_hit_particles, ship_systems, sector_types, high_score
     player_angle = 0
     player_rotation_speed = 0
     player_speed = 0
-    player_grid_x = 8
-    player_grid_y = 8
-    player_energy = 1000
-    player_missiles = 5
-    ship_systems = {'radar': 100, 'computer': 100, 'engine': 100, 'life_support': 100, 'targeting_computer': 100}
+    player_grid_x = 4
+    player_grid_y = 4
+    player_fuel = 1500
+    player_shields = 150
+    player_missiles = 10
+    ship_systems = {'radar': 100, 'computer': 100, 'engine': 100}
     score = 0
     game_state = 'playing' # Always start in playing state after menu selection
     warp_targeting = False
@@ -177,7 +180,7 @@ def reset_game(mode='adventure'):
     enemies = []
     bases = []
     bases.append({'x': 1, 'y': 1, 'health': 100})
-    bases.append({'x': 14, 'y': 14, 'health': 100})
+    bases.append({'x': 7, 'y': 7, 'health': 100})
     planets = []
     keys_collected_count = 0
     boss = None
@@ -193,21 +196,21 @@ def reset_game(mode='adventure'):
         high_score = 0
 
     # Generate nebulas
-    for _ in range(5):
+    for _ in range(3):
         nx = random.randint(0, GRID_SIZE - 1)
         ny = random.randint(0, GRID_SIZE - 1)
         sector_types[nx][ny] = 'nebula'
 
     # Generate asteroid fields
-    for _ in range(10):
+    for _ in range(5):
         ax = random.randint(0, GRID_SIZE - 1)
         ay = random.randint(0, GRID_SIZE - 1)
         if sector_types[ax][ay] == 'empty':
             sector_types[ax][ay] = 'asteroid_field'
 
     if mode == 'adventure':
-        # Create 7 planets with keys
-        while len(planets) < 7:
+        # Create 3 planets with keys
+        while len(planets) < 3:
             planet_x = random.randint(0, GRID_SIZE - 1)
             planet_y = random.randint(0, GRID_SIZE - 1)
             is_on_base = any(base['x'] == planet_x and base['y'] == planet_y for base in bases)
@@ -217,7 +220,7 @@ def reset_game(mode='adventure'):
                 planets.append({'x': planet_x, 'y': planet_y, 'has_key': True})
 
         # Create some more planets without keys
-        while len(planets) < 15:
+        while len(planets) < 7:
             planet_x = random.randint(0, GRID_SIZE - 1)
             planet_y = random.randint(0, GRID_SIZE - 1)
             is_on_base = any(base['x'] == planet_x and base['y'] == planet_y for base in bases)
@@ -225,10 +228,8 @@ def reset_game(mode='adventure'):
             is_duplicate = any(p['x'] == planet_x and p['y'] == planet_y for p in planets)
             if not is_on_base and not is_on_player_start and not is_duplicate:
                 planets.append({'x': planet_x, 'y': planet_y, 'has_key': False})
-        
-        # Initial enemy for adventure mode
-        enemy_type = random.choice(['fighter', 'bomber', 'cruiser'])
-        health = {'fighter': 10, 'bomber': 20, 'cruiser': 50}[enemy_type]
+        enemy_type = random.choice(['batte', 'gol', 'demo'])
+        health = {'batte': 7, 'gol': 15, 'demo': 30}[enemy_type]
         enemies.append({'x': 0, 'y': 0, 'z': 200, 'type': enemy_type, 'grid_x': player_grid_x, 'grid_y': player_grid_y, 'health': health})
 
         # Asteroid fields for adventure mode
@@ -246,8 +247,8 @@ def reset_game(mode='adventure'):
         # Command mode specific initialization
         # More enemies, focus on defending bases
         for _ in range(5): # 5 initial enemies
-            enemy_type = random.choice(['fighter', 'bomber', 'cruiser'])
-            health = {'fighter': 10, 'bomber': 20, 'cruiser': 50}[enemy_type]
+            enemy_type = random.choice(['batte', 'gol', 'demo'])
+            health = {'batte': 7, 'gol': 15, 'demo': 30}[enemy_type]
             enemies.append({'x': random.randint(-100, 100), 'y': random.randint(-100, 100), 'z': random.randint(200, 500), 'type': enemy_type, 'grid_x': random.randint(0, GRID_SIZE - 1), 'grid_y': random.randint(0, GRID_SIZE - 1), 'health': health})
         # No keys, no boss in command mode
         planets = []
@@ -260,8 +261,8 @@ def reset_game(mode='adventure'):
         # Training mode specific initialization
         # Few enemies, no objectives
         for _ in range(2): # 2 initial enemies
-            enemy_type = random.choice(['fighter', 'cruiser']) # No bombers in training
-            health = {'fighter': 10, 'bomber': 20, 'cruiser': 50}[enemy_type]
+            enemy_type = random.choice(['batte', 'demo']) # No gols in training
+            health = {'batte': 7, 'gol': 15, 'demo': 30}[enemy_type]
             enemies.append({'x': random.randint(-100, 100), 'y': random.randint(-100, 100), 'z': random.randint(200, 500), 'type': enemy_type, 'grid_x': random.randint(0, GRID_SIZE - 1), 'grid_y': random.randint(0, GRID_SIZE - 1), 'health': health})
         # No keys, no boss, no bases, no asteroid fields in training mode
         planets = []
@@ -285,20 +286,23 @@ def draw_title_screen():
 def draw_star_map():
     screen.fill(BLACK)
     
+    cell_width = SCREEN_WIDTH / GRID_SIZE
+    cell_height = SCREEN_HEIGHT / GRID_SIZE
+
     # Draw grid
     for x in range(GRID_SIZE):
         for y in range(GRID_SIZE):
             if sector_types[x][y] == 'nebula':
-                pygame.draw.rect(screen, (50, 50, 100), (x * 50, y * 37.5, 50, 37.5))
+                pygame.draw.rect(screen, (50, 50, 100), (x * cell_width, y * cell_height, cell_width, cell_height))
             elif sector_types[x][y] == 'asteroid_field':
-                pygame.draw.rect(screen, (100, 100, 100), (x * 50, y * 37.5, 50, 37.5))
+                pygame.draw.rect(screen, (100, 100, 100), (x * cell_width, y * cell_height, cell_width, cell_height))
             else:
-                pygame.draw.rect(screen, GREEN, (x * 50, y * 37.5, 50, 37.5), 1)
+                pygame.draw.rect(screen, GREEN, (x * cell_width, y * cell_height, cell_width, cell_height), 1)
 
     # Draw bases
     for base in bases:
-        base_map_x = base['x'] * 50 + 25
-        base_map_y = base['y'] * 37.5 + 18.75
+        base_map_x = base['x'] * cell_width + cell_width / 2
+        base_map_y = base['y'] * cell_height + cell_height / 2
         health_ratio = base['health'] / 100.0
         if health_ratio > 0.5:
             color = BLUE
@@ -310,16 +314,16 @@ def draw_star_map():
 
     # Draw planets
     for p in planets:
-        planet_map_x = p['x'] * 50 + 25
-        planet_map_y = p['y'] * 37.5 + 18.75
+        planet_map_x = p['x'] * cell_width + cell_width / 2
+        planet_map_y = p['y'] * cell_height + cell_height / 2
         if p['has_key']:
             pygame.draw.rect(screen, YELLOW, (planet_map_x - 5, planet_map_y - 5, 10, 10))
         elif p.get('is_final'):
             pygame.draw.circle(screen, MAGENTA, (planet_map_x, planet_map_y), 12)
 
     # Draw player
-    player_map_x = player_grid_x * 50 + 25
-    player_map_y = player_grid_y * 37.5 + 18.75
+    player_map_x = player_grid_x * cell_width + cell_width / 2
+    player_map_y = player_grid_y * cell_height + cell_height / 2
     pygame.draw.circle(screen, YELLOW, (player_map_x, player_map_y), 5)
     heading_x = player_map_x + 20 * math.sin(math.radians(player_angle))
     heading_y = player_map_y - 20 * math.cos(math.radians(player_angle))
@@ -327,17 +331,17 @@ def draw_star_map():
 
     # Draw enemies
     for enemy in enemies:
-        enemy_map_x = enemy['grid_x'] * 50 + 25
-        enemy_map_y = enemy['grid_y'] * 37.5 + 18.75
+        enemy_map_x = enemy['grid_x'] * cell_width + cell_width / 2
+        enemy_map_y = enemy['grid_y'] * cell_height + cell_height / 2
         if enemy['type'] == 'fighter':
             pygame.draw.circle(screen, RED, (enemy_map_x, enemy_map_y), 3)
-        elif enemy['type'] == 'bomber':
+        elif enemy['type'] == 'gol':
             pygame.draw.rect(screen, ORANGE, (enemy_map_x - 3, enemy_map_y - 3, 6, 6))
-        elif enemy['type'] == 'boss':
+        elif enemy['type'] == 'battsura':
             pygame.draw.circle(screen, MAGENTA, (enemy_map_x, enemy_map_y), 8)
 
     # Draw cursor
-    pygame.draw.rect(screen, WHITE, (target_cursor_x * 50, target_cursor_y * 37.5, 50, 37.5), 2)
+    pygame.draw.rect(screen, WHITE, (target_cursor_x * cell_width, target_cursor_y * cell_height, cell_width, cell_height), 2)
 
 
 def draw_cockpit_frame():
@@ -372,11 +376,17 @@ def draw_hud():
     screen.blit(high_score_text, high_score_rect)
 
     # --- Bottom Left ---
-    # Energy Gauge (as an arc)
-    energy_angle = (player_energy / MAX_ENERGY) * 180
-    pygame.draw.arc(screen, GREEN, (10, SCREEN_HEIGHT - 140, 80, 80), math.radians(180), math.radians(180 + energy_angle), 5)
-    energy_text = font.render("ENERGY", True, WHITE)
-    screen.blit(energy_text, (20, SCREEN_HEIGHT - 130))
+    # Fuel Gauge (as an arc)
+    fuel_angle = (player_fuel / MAX_FUEL) * 180
+    pygame.draw.arc(screen, GREEN, (10, SCREEN_HEIGHT - 140, 80, 80), math.radians(180), math.radians(180 + fuel_angle), 5)
+    fuel_text = font.render("FUEL", True, WHITE)
+    screen.blit(fuel_text, (20, SCREEN_HEIGHT - 130))
+
+    # Shield Gauge (as an arc)
+    shield_angle = (player_shields / MAX_SHIELDS) * 180
+    pygame.draw.arc(screen, CYAN, (10, SCREEN_HEIGHT - 100, 80, 80), math.radians(180), math.radians(180 + shield_angle), 5)
+    shield_text = font.render("SHIELDS", True, WHITE)
+    screen.blit(shield_text, (20, SCREEN_HEIGHT - 90))
 
     # --- Bottom Right ---
     # Missile Count (as vertical bars)
@@ -391,7 +401,7 @@ def draw_hud():
     date_rect = date_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT - 20))
     screen.blit(date_text, date_rect)
     # Keys
-    key_text = font.render(f"KEYS: {keys_collected_count}/7", True, YELLOW)
+    key_text = font.render(f"KEYS: {keys_collected_count}/3", True, YELLOW)
     key_rect = key_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT - 50))
     screen.blit(key_text, key_rect)
 
@@ -532,10 +542,10 @@ while running:
                         warp_targeting = not warp_targeting
                         if not warp_targeting: # if we are turning warp off
                             dist = math.sqrt((target_grid_x - player_grid_x)**2 + (target_grid_y - player_grid_y)**2)
-                            energy_cost = int(dist * 10)
-                            if player_energy >= energy_cost:
+                            fuel_cost = int(dist * 10)
+                            if player_fuel >= fuel_cost:
                                 if warp_sound: warp_sound.play()
-                                player_energy -= energy_cost
+                                player_fuel -= fuel_cost
                                 date += int(dist)
                                 warp_effect = 10 # Start warp effect
                                 player_grid_x = target_grid_x
@@ -556,15 +566,14 @@ while running:
                                     break
                             # Add a new enemy when warping to a new sector
                             if not any(base['x'] == player_grid_x and base['y'] == player_grid_y for base in bases):
-                                enemy_type = random.choice(['fighter', 'bomber', 'cruiser'])
-                                health = {'fighter': 10, 'bomber': 20, 'cruiser': 50}[enemy_type]
+                                enemy_type = random.choice(['batte', 'gol', 'demo'])
+                                health = {'batte': 10, 'gol': 20, 'demo': 50}[enemy_type]
                                 enemies.append({'x': random.randint(-100, 100), 'y': random.randint(-100, 100), 'z': 500, 'type': enemy_type, 'grid_x': target_grid_x, 'grid_y': target_grid_y, 'health': health})
                 if event.key == pygame.K_SPACE:
-                    if player_energy >= 10:
+                    if player_shields >= 1:
                         if laser_sound: laser_sound.play()
-                        player_energy -= 10
-                        accuracy_offset = (100 - ship_systems['targeting_computer']) / 1000
-                        bullets.append({'x': 0, 'y': 0, 'z': 0, 'vx': random.uniform(-accuracy_offset, accuracy_offset), 'vy': random.uniform(-accuracy_offset, accuracy_offset), 'vz': 40})
+                        player_shields -= 1
+                        bullets.append({'x': 0, 'y': 0, 'z': 0, 'vx': 0, 'vy': 0, 'vz': 40})
                 if event.key == pygame.K_n:
                     if player_missiles > 0:
                         if missile_sound: missile_sound.play()
@@ -573,9 +582,9 @@ while running:
                 if event.key == pygame.K_m:
                     game_state = 'map'
                 if event.key == pygame.K_h:
-                    if ship_systems['computer'] > 0 and player_energy >= 50:
+                    if ship_systems['computer'] > 0 and player_fuel >= 50:
                         if warp_sound: warp_sound.play()
-                        player_energy -= 50
+                        player_fuel -= 50
                         date += 5
                         warp_effect = 10 # Start warp effect
                         player_grid_x = random.randint(0, GRID_SIZE - 1)
@@ -625,11 +634,7 @@ while running:
                     game_state = 'menu' # Go back to menu after game over
 
     if game_state == 'playing':
-        # Life support
-        if ship_systems['life_support'] > 0:
-            player_energy -= 0.01 * (100 / ship_systems['life_support'])
-        else:
-            player_energy -= 0.1
+
 
         # Update player rotation and position
         player_angle += player_rotation_speed
@@ -660,13 +665,13 @@ while running:
         if sector_types[player_grid_x][player_grid_y] == 'asteroid_field':
             if random.random() < 0.1:
                 if shield_hit_sound: shield_hit_sound.play()
-                if random.random() < 0.3: # 30% chance to damage a system
+                if random.random() < 0.2: # 20% chance to damage a system
                     system_to_damage = random.choice(list(ship_systems.keys()))
                     ship_systems[system_to_damage] -= 10 # Asteroids do more damage
                     if ship_systems[system_to_damage] < 0:
                         ship_systems[system_to_damage] = 0
                 else:
-                    player_energy -= 10
+                    player_shields -= 10
                 damage_effect = 10 # Red overlay
 
 
@@ -721,8 +726,7 @@ while running:
                 if enemy['grid_x'] == player_grid_x and enemy['grid_y'] == player_grid_y:
                     if game_over_sound: game_over_sound.play()
                     game_state = 'lost'
-            elif enemy['type'] == 'fighter':
-                # Fighters will try to flank the player
+            elif enemy['type'] == 'batte':
                 if enemy['z'] > 200:
                     enemy['z'] -= 2
                 else:
@@ -733,7 +737,7 @@ while running:
                 # Fighters shoot at the player
                 if random.random() < 0.02:
                     enemy_bullets.append({'x': enemy['x'], 'y': enemy['y'], 'z': enemy['z'], 'vx': 0, 'vy': 0, 'vz': -10})
-            elif enemy['type'] == 'bomber':
+            elif enemy['type'] == 'gol':
                 base_in_sector = None
                 for base in bases:
                     if player_grid_x == base['x'] and player_grid_y == base['y']:
@@ -750,7 +754,7 @@ while running:
                             game_state = 'lost'
                 else:
                     enemy['z'] -= 0.25
-            elif enemy['type'] == 'cruiser':
+            elif enemy['type'] == 'demo':
                 enemy['z'] -= 0.1 # Cruisers are slow
                 # Cruisers shoot powerful shots less frequently
                 if random.random() < 0.01:
@@ -760,7 +764,7 @@ while running:
                 if enemy in enemies: 
                     if shield_hit_sound: shield_hit_sound.play()
                     enemies.remove(enemy)
-                    player_energy -= 10
+                    player_shields -= 10
                     damage_effect = 10
 
 
@@ -799,15 +803,15 @@ while running:
                     enemy['health'] -= damage
 
                     if enemy['health'] <= 0:
-                        if enemy['type'] == 'boss':
+                        if enemy['type'] == 'battsura':
                             if win_sound: win_sound.play()
                             game_state = 'won'
                             score += 1000
-                        elif enemy['type'] == 'fighter':
+                        elif enemy['type'] == 'batte':
                             score += 10
-                        elif enemy['type'] == 'bomber':
+                        elif enemy['type'] == 'gol':
                             score += 20
-                        elif enemy['type'] == 'cruiser':
+                        elif enemy['type'] == 'demo':
                             score += 50
                         enemies.remove(enemy)
 
@@ -828,14 +832,13 @@ while running:
             dist = math.sqrt(bullet['x']**2 + bullet['y']**2 + bullet['z']**2)
             if dist < 20:
                 if shield_hit_sound: shield_hit_sound.play()
-                enemy_bullets.remove(bullet)
-                if random.random() < 0.3: # 30% chance to damage a system
+                if random.random() < 0.2: # 20% chance to damage a system
                     system_to_damage = random.choice(list(ship_systems.keys()))
                     ship_systems[system_to_damage] -= 10
                     if ship_systems[system_to_damage] < 0:
                         ship_systems[system_to_damage] = 0
                 else:
-                    player_energy -= bullet.get('power', 5)
+                    player_shields -= bullet.get('power', 5)
                 damage_effect = 10 # Red overlay
 
         # Asteroid Collision
@@ -843,13 +846,13 @@ while running:
             dist = math.sqrt(asteroid['x']**2 + asteroid['y']**2 + asteroid['z']**2)
             if dist < asteroid['size']:
                 if shield_hit_sound: shield_hit_sound.play()
-                if random.random() < 0.3: # 30% chance to damage a system
+                if random.random() < 0.2: # 20% chance to damage a system
                     system_to_damage = random.choice(list(ship_systems.keys()))
                     ship_systems[system_to_damage] -= 20 # Asteroids do more damage
                     if ship_systems[system_to_damage] < 0:
                         ship_systems[system_to_damage] = 0
                 else:
-                    player_energy -= 10
+                    player_shields -= 10
                 damage_effect = 10 # Red overlay
                 asteroids.remove(asteroid)
 
@@ -857,9 +860,12 @@ while running:
         # Docking and refueling
         for base in bases:
             if player_grid_x == base['x'] and player_grid_y == base['y']:
-                player_energy += 5
-                if player_energy > MAX_ENERGY:
-                    player_energy = MAX_ENERGY
+                player_fuel += 10
+                if player_fuel > MAX_FUEL:
+                    player_fuel = MAX_FUEL
+                player_shields += 2
+                if player_shields > MAX_SHIELDS:
+                    player_shields = MAX_SHIELDS
                 player_missiles = 5 # Refill missiles at base
                 # Repair systems
                 for system in ship_systems:
@@ -871,7 +877,7 @@ while running:
 
 
         # Check for game over
-        if player_energy <= 0 or date >= MAX_DATE:
+        if player_fuel <= 0 or player_shields <= 0 or date >= MAX_DATE:
             if game_over_sound: game_over_sound.play()
             game_state = 'lost'
 
@@ -881,7 +887,7 @@ while running:
                 p['has_key'] = False
                 keys_collected_count += 1
                 # Spawn boss if all keys are collected
-                if keys_collected_count == 7:
+                if keys_collected_count == 3:
                     final_planet_x = random.randint(0, GRID_SIZE - 1)
                     final_planet_y = random.randint(0, GRID_SIZE - 1)
                     planets.append({'x': final_planet_x, 'y': final_planet_y, 'has_key': False, 'is_final': True})
@@ -961,7 +967,7 @@ while running:
 
             if 0 <= x < SCREEN_WIDTH and 0 <= y < SCREEN_HEIGHT:
                 size = (1 - enemy['z'] / SCREEN_WIDTH) * 20
-                if enemy['type'] == 'fighter':
+                if enemy['type'] == 'batte':
                     # T-shape fighter
                     points = [
                         (x - size, y - size / 3),
@@ -971,8 +977,7 @@ while running:
                     ]
                     pygame.draw.polygon(screen, RED, points, 1)
                     pygame.draw.line(screen, RED, (x, y - size / 3), (x, y + size), 1)
-                elif enemy['type'] == 'bomber':
-                    # Wide bomber
+                elif enemy['type'] == 'gol':
                     points = [
                         (x - size * 1.5, y - size / 2),
                         (x + size * 1.5, y - size / 2),
@@ -980,7 +985,7 @@ while running:
                         (x - size, y + size / 2),
                     ]
                     pygame.draw.polygon(screen, ORANGE, points, 1)
-                elif enemy['type'] == 'cruiser':
+                elif enemy['type'] == 'demo':
                     # Cruiser with wings
                     points = [
                         (x, y - size),
@@ -989,7 +994,7 @@ while running:
                     ]
                     pygame.draw.polygon(screen, (200, 200, 200), points, 1)
                     pygame.draw.line(screen, (200, 200, 200), (x, y - size), (x, y + size), 1)
-                elif enemy['type'] == 'boss':
+                elif enemy['type'] == 'battsura':
                     # More complex boss
                     pygame.draw.rect(screen, MAGENTA, (x - size, y - size, size * 2, size * 2), 1)
                     pygame.draw.line(screen, MAGENTA, (x - size, y - size), (x + size, y + size), 1)
