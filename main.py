@@ -288,18 +288,25 @@ def draw_star_map():
     
     cell_width = SCREEN_WIDTH / GRID_SIZE
     cell_height = SCREEN_HEIGHT / GRID_SIZE
+    font = pygame.font.Font(None, 24)
+    symbol_font = pygame.font.Font(None, 32)
 
-    # Draw grid
+    # Draw grid with authentic Star Luster style
     for x in range(GRID_SIZE):
         for y in range(GRID_SIZE):
+            cell_x = x * cell_width
+            cell_y = y * cell_height
+            
+            # Background for special sectors
             if sector_types[x][y] == 'nebula':
-                pygame.draw.rect(screen, (50, 50, 100), (x * cell_width, y * cell_height, cell_width, cell_height))
+                pygame.draw.rect(screen, (30, 30, 60), (cell_x, cell_y, cell_width, cell_height))
             elif sector_types[x][y] == 'asteroid_field':
-                pygame.draw.rect(screen, (100, 100, 100), (x * cell_width, y * cell_height, cell_width, cell_height))
-            else:
-                pygame.draw.rect(screen, GREEN, (x * cell_width, y * cell_height, cell_width, cell_height), 1)
+                pygame.draw.rect(screen, (60, 60, 60), (cell_x, cell_y, cell_width, cell_height))
+            
+            # Grid lines
+            pygame.draw.rect(screen, GREEN, (cell_x, cell_y, cell_width, cell_height), 1)
 
-    # Draw bases
+    # Draw bases with authentic "B" symbol
     for base in bases:
         base_map_x = base['x'] * cell_width + cell_width / 2
         base_map_y = base['y'] * cell_height + cell_height / 2
@@ -310,150 +317,285 @@ def draw_star_map():
             color = YELLOW
         else:
             color = RED
-        pygame.draw.circle(screen, color, (base_map_x, base_map_y), 10)
+        # Draw "B" symbol
+        b_text = symbol_font.render("B", True, color)
+        b_rect = b_text.get_rect(center=(base_map_x, base_map_y))
+        screen.blit(b_text, b_rect)
 
-    # Draw planets
+    # Draw planets with authentic "*" symbol
     for p in planets:
         planet_map_x = p['x'] * cell_width + cell_width / 2
         planet_map_y = p['y'] * cell_height + cell_height / 2
-        if p['has_key']:
-            pygame.draw.rect(screen, YELLOW, (planet_map_x - 5, planet_map_y - 5, 10, 10))
+        if p.get('has_key'):
+            # Yellow star for planets with keys
+            star_text = symbol_font.render("*", True, YELLOW)
         elif p.get('is_final'):
-            pygame.draw.circle(screen, MAGENTA, (planet_map_x, planet_map_y), 12)
+            # Magenta star for final planet
+            star_text = symbol_font.render("*", True, MAGENTA)
+        else:
+            # White star for regular planets
+            star_text = symbol_font.render("*", True, WHITE)
+        star_rect = star_text.get_rect(center=(planet_map_x, planet_map_y))
+        screen.blit(star_text, star_rect)
 
-    # Draw player
+    # Draw asteroid fields with "::" symbol
+    for af in asteroid_fields:
+        af_map_x = af['x'] * cell_width + cell_width / 2
+        af_map_y = af['y'] * cell_height + cell_height / 2
+        af_text = font.render("::", True, (150, 150, 150))
+        af_rect = af_text.get_rect(center=(af_map_x, af_map_y))
+        screen.blit(af_text, af_rect)
+
+    # Count enemies per sector and draw "E" with count
+    enemy_counts = {}
+    for enemy in enemies:
+        key = (enemy['grid_x'], enemy['grid_y'])
+        enemy_counts[key] = enemy_counts.get(key, 0) + 1
+    
+    for (ex, ey), count in enemy_counts.items():
+        enemy_map_x = ex * cell_width + cell_width / 2
+        enemy_map_y = ey * cell_height + cell_height / 2
+        # Check if it's the boss
+        is_boss = any(e['type'] in ['boss', 'battsura'] and e['grid_x'] == ex and e['grid_y'] == ey for e in enemies)
+        color = MAGENTA if is_boss else RED
+        e_text = symbol_font.render("E", True, color)
+        e_rect = e_text.get_rect(center=(enemy_map_x, enemy_map_y - 5))
+        screen.blit(e_text, e_rect)
+        # Show count if more than 1
+        if count > 1:
+            count_text = font.render(str(count), True, color)
+            count_rect = count_text.get_rect(center=(enemy_map_x, enemy_map_y + 10))
+            screen.blit(count_text, count_rect)
+
+    # Draw player with heading indicator
     player_map_x = player_grid_x * cell_width + cell_width / 2
     player_map_y = player_grid_y * cell_height + cell_height / 2
-    pygame.draw.circle(screen, YELLOW, (player_map_x, player_map_y), 5)
-    heading_x = player_map_x + 20 * math.sin(math.radians(player_angle))
-    heading_y = player_map_y - 20 * math.cos(math.radians(player_angle))
+    pygame.draw.circle(screen, YELLOW, (player_map_x, player_map_y), 6)
+    pygame.draw.circle(screen, YELLOW, (player_map_x, player_map_y), 3)
+    # Heading line
+    heading_x = player_map_x + 25 * math.sin(math.radians(player_angle))
+    heading_y = player_map_y - 25 * math.cos(math.radians(player_angle))
     pygame.draw.line(screen, YELLOW, (player_map_x, player_map_y), (heading_x, heading_y), 2)
 
-    # Draw enemies
-    for enemy in enemies:
-        enemy_map_x = enemy['grid_x'] * cell_width + cell_width / 2
-        enemy_map_y = enemy['grid_y'] * cell_height + cell_height / 2
-        if enemy['type'] == 'fighter':
-            pygame.draw.circle(screen, RED, (enemy_map_x, enemy_map_y), 3)
-        elif enemy['type'] == 'gol':
-            pygame.draw.rect(screen, ORANGE, (enemy_map_x - 3, enemy_map_y - 3, 6, 6))
-        elif enemy['type'] == 'battsura':
-            pygame.draw.circle(screen, MAGENTA, (enemy_map_x, enemy_map_y), 8)
-
-    # Draw cursor
-    pygame.draw.rect(screen, WHITE, (target_cursor_x * cell_width, target_cursor_y * cell_height, cell_width, cell_height), 2)
+    # Draw cursor (targeting)
+    cursor_x = target_cursor_x * cell_width
+    cursor_y = target_cursor_y * cell_height
+    pygame.draw.rect(screen, WHITE, (cursor_x, cursor_y, cell_width, cell_height), 3)
+    # Cursor corners
+    corner_size = 10
+    pygame.draw.line(screen, WHITE, (cursor_x, cursor_y), (cursor_x + corner_size, cursor_y), 3)
+    pygame.draw.line(screen, WHITE, (cursor_x, cursor_y), (cursor_x, cursor_y + corner_size), 3)
+    pygame.draw.line(screen, WHITE, (cursor_x + cell_width, cursor_y), (cursor_x + cell_width - corner_size, cursor_y), 3)
+    pygame.draw.line(screen, WHITE, (cursor_x + cell_width, cursor_y), (cursor_x + cell_width, cursor_y + corner_size), 3)
+    
+    # Map title and instructions
+    title_text = font.render("GALACTIC MAP", True, GREEN)
+    screen.blit(title_text, (10, 10))
+    inst_text = font.render("ARROWS:Move  SPACE:Photon Torpedo  M:Exit", True, WHITE)
+    screen.blit(inst_text, (10, SCREEN_HEIGHT - 20))
 
 
 def draw_cockpit_frame():
-    # A more detailed, Star Luster-style cockpit
-    cockpit_color = (0, 100, 0) # Dark green
+    # Authentic Star Luster-style cockpit with green wireframe aesthetic
+    cockpit_color = (0, 80, 0) # Dark green background
+    cockpit_bright = (0, 200, 0) # Bright green for wireframe
+    
     # Top and bottom bars
     pygame.draw.rect(screen, cockpit_color, (0, 0, SCREEN_WIDTH, 100))
     pygame.draw.rect(screen, cockpit_color, (0, SCREEN_HEIGHT - 150, SCREEN_WIDTH, 150))
     # Side bars
     pygame.draw.rect(screen, cockpit_color, (0, 100, 100, SCREEN_HEIGHT - 250))
     pygame.draw.rect(screen, cockpit_color, (SCREEN_WIDTH - 100, 100, 100, SCREEN_HEIGHT - 250))
-    # Window outline
-    pygame.draw.rect(screen, GREEN, (100, 100, SCREEN_WIDTH - 200, SCREEN_HEIGHT - 250), 5)
+    
+    # Main viewport outline with double border for depth
+    pygame.draw.rect(screen, GREEN, (100, 100, SCREEN_WIDTH - 200, SCREEN_HEIGHT - 250), 3)
+    pygame.draw.rect(screen, cockpit_bright, (105, 105, SCREEN_WIDTH - 210, SCREEN_HEIGHT - 260), 1)
 
-    # Add some details to the cockpit
-    pygame.draw.line(screen, GREEN, (100, 100), (150, 150), 5)
-    pygame.draw.line(screen, GREEN, (SCREEN_WIDTH - 100, 100), (SCREEN_WIDTH - 150, 150), 5)
-    pygame.draw.line(screen, GREEN, (100, SCREEN_HEIGHT - 150), (150, SCREEN_HEIGHT - 200), 5)
-    pygame.draw.line(screen, GREEN, (SCREEN_WIDTH - 100, SCREEN_HEIGHT - 150), (SCREEN_WIDTH - 150, SCREEN_HEIGHT - 200), 5)
+    # Corner brackets (authentic Star Luster style)
+    bracket_size = 25
+    # Top-left
+    pygame.draw.line(screen, cockpit_bright, (100, 100), (100 + bracket_size, 100), 3)
+    pygame.draw.line(screen, cockpit_bright, (100, 100), (100, 100 + bracket_size), 3)
+    # Top-right
+    pygame.draw.line(screen, cockpit_bright, (SCREEN_WIDTH - 100, 100), (SCREEN_WIDTH - 100 - bracket_size, 100), 3)
+    pygame.draw.line(screen, cockpit_bright, (SCREEN_WIDTH - 100, 100), (SCREEN_WIDTH - 100, 100 + bracket_size), 3)
+    # Bottom-left
+    pygame.draw.line(screen, cockpit_bright, (100, SCREEN_HEIGHT - 150), (100 + bracket_size, SCREEN_HEIGHT - 150), 3)
+    pygame.draw.line(screen, cockpit_bright, (100, SCREEN_HEIGHT - 150), (100, SCREEN_HEIGHT - 150 - bracket_size), 3)
+    # Bottom-right
+    pygame.draw.line(screen, cockpit_bright, (SCREEN_WIDTH - 100, SCREEN_HEIGHT - 150), (SCREEN_WIDTH - 100 - bracket_size, SCREEN_HEIGHT - 150), 3)
+    pygame.draw.line(screen, cockpit_bright, (SCREEN_WIDTH - 100, SCREEN_HEIGHT - 150), (SCREEN_WIDTH - 100, SCREEN_HEIGHT - 150 - bracket_size), 3)
+    
+    # Instrumentation panels (decorative lines)
+    # Left panel details
+    for i in range(3):
+        y_pos = 120 + i * 30
+        pygame.draw.line(screen, GREEN, (10, y_pos), (90, y_pos), 1)
+    # Right panel details
+    for i in range(3):
+        y_pos = 120 + i * 30
+        pygame.draw.line(screen, GREEN, (SCREEN_WIDTH - 90, y_pos), (SCREEN_WIDTH - 10, y_pos), 1)
+    # Bottom panel grid
+    for i in range(5):
+        x_pos = 150 + i * 100
+        pygame.draw.line(screen, GREEN, (x_pos, SCREEN_HEIGHT - 140), (x_pos, SCREEN_HEIGHT - 10), 1)
 
 def draw_hud():
     font = pygame.font.Font(None, 30)
+    small_font = pygame.font.Font(None, 20)
     
     # --- Top Center ---
     # Score
-    score_text = font.render(f"SCORE: {score}", True, WHITE)
-    score_rect = score_text.get_rect(center=(SCREEN_WIDTH/2, 30))
+    score_text = font.render(f"SCORE: {score}", True, GREEN)
+    score_rect = score_text.get_rect(center=(SCREEN_WIDTH/2, 25))
     screen.blit(score_text, score_rect)
     # High Score
-    high_score_text = font.render(f"HIGH: {high_score}", True, YELLOW)
-    high_score_rect = high_score_text.get_rect(center=(SCREEN_WIDTH/2, 60))
+    high_score_text = small_font.render(f"HIGH: {high_score}", True, YELLOW)
+    high_score_rect = high_score_text.get_rect(center=(SCREEN_WIDTH/2, 50))
     screen.blit(high_score_text, high_score_rect)
 
     # --- Bottom Left ---
     # Fuel Gauge (as an arc)
     fuel_angle = (player_fuel / MAX_FUEL) * 180
     pygame.draw.arc(screen, GREEN, (10, SCREEN_HEIGHT - 140, 80, 80), math.radians(180), math.radians(180 + fuel_angle), 5)
-    fuel_text = font.render("FUEL", True, WHITE)
-    screen.blit(fuel_text, (20, SCREEN_HEIGHT - 130))
+    fuel_text = small_font.render("FUEL", True, GREEN)
+    screen.blit(fuel_text, (25, SCREEN_HEIGHT - 125))
+    fuel_value = small_font.render(f"{int(player_fuel)}", True, WHITE)
+    screen.blit(fuel_value, (25, SCREEN_HEIGHT - 105))
 
     # Shield Gauge (as an arc)
     shield_angle = (player_shields / MAX_SHIELDS) * 180
-    pygame.draw.arc(screen, CYAN, (10, SCREEN_HEIGHT - 100, 80, 80), math.radians(180), math.radians(180 + shield_angle), 5)
-    shield_text = font.render("SHIELDS", True, WHITE)
-    screen.blit(shield_text, (20, SCREEN_HEIGHT - 90))
+    shield_color = GREEN if player_shields > 50 else (YELLOW if player_shields > 20 else RED)
+    pygame.draw.arc(screen, shield_color, (10, SCREEN_HEIGHT - 90, 80, 80), math.radians(180), math.radians(180 + shield_angle), 5)
+    shield_text = small_font.render("SHIELD", True, shield_color)
+    screen.blit(shield_text, (20, SCREEN_HEIGHT - 75))
+    shield_value = small_font.render(f"{int(player_shields)}", True, WHITE)
+    screen.blit(shield_value, (30, SCREEN_HEIGHT - 55))
 
     # --- Bottom Right ---
     # Missile Count (as vertical bars)
-    missile_text = font.render("MISSILES", True, WHITE)
-    screen.blit(missile_text, (SCREEN_WIDTH - 95, SCREEN_HEIGHT - 130))
-    for i in range(player_missiles):
-        pygame.draw.rect(screen, CYAN, (SCREEN_WIDTH - 80 + (i * 10), SCREEN_HEIGHT - 100, 5, 20))
+    missile_text = small_font.render("MISSILES", True, GREEN)
+    screen.blit(missile_text, (SCREEN_WIDTH - 100, SCREEN_HEIGHT - 130))
+    for i in range(min(player_missiles, 10)):  # Show max 10 bars
+        pygame.draw.rect(screen, CYAN, (SCREEN_WIDTH - 90 + (i * 8), SCREEN_HEIGHT - 110, 6, 25))
+    if player_missiles > 10:
+        extra_text = small_font.render(f"+{player_missiles - 10}", True, CYAN)
+        screen.blit(extra_text, (SCREEN_WIDTH - 90, SCREEN_HEIGHT - 80))
 
     # --- Bottom Center ---
     # Date
-    date_text = font.render(f"DATE: {date}", True, WHITE)
+    date_text = small_font.render(f"DATE: {date:04d}", True, GREEN)
     date_rect = date_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT - 20))
     screen.blit(date_text, date_rect)
     # Keys
     key_text = font.render(f"KEYS: {keys_collected_count}/3", True, YELLOW)
-    key_rect = key_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT - 50))
+    key_rect = key_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT - 45))
     screen.blit(key_text, key_rect)
 
     # --- Left Side ---
-    # System Status
-    system_font = pygame.font.Font(None, 24)
+    # System Status (Enhanced with bars)
+    system_font = pygame.font.Font(None, 22)
+    system_names = {'radar': 'RAD', 'computer': 'COM', 'engine': 'ENG'}
     for i, (system, health) in enumerate(ship_systems.items()):
+        y_pos = 110 + i * 30
+        # System name
         color = GREEN if health > 50 else (YELLOW if health > 20 else RED)
-        text = system_font.render(f"{system.upper()}: {health}%", True, color)
-        screen.blit(text, (10, 110 + i * 25))
+        text = system_font.render(f"{system_names[system]}", True, color)
+        screen.blit(text, (10, y_pos))
+        # Health bar
+        bar_width = 60
+        bar_height = 8
+        pygame.draw.rect(screen, (50, 50, 50), (50, y_pos + 5, bar_width, bar_height))
+        pygame.draw.rect(screen, color, (50, y_pos + 5, int(bar_width * health / 100), bar_height))
+        # Percentage
+        percent_text = small_font.render(f"{int(health)}%", True, color)
+        screen.blit(percent_text, (115, y_pos + 2))
+
+    # --- Targeting Computer (Right Side) ---
+    # Find nearest enemy for targeting
+    nearest_enemy = None
+    min_dist = float('inf')
+    for enemy in enemies:
+        if enemy['grid_x'] == player_grid_x and enemy['grid_y'] == player_grid_y:
+            dist = math.sqrt(enemy['x']**2 + enemy['y']**2 + enemy['z']**2)
+            if dist < min_dist:
+                min_dist = dist
+                nearest_enemy = enemy
+    
+    if nearest_enemy and ship_systems['computer'] > 0:
+        target_font = pygame.font.Font(None, 20)
+        enemy_type_names = {'batte': 'BATTE', 'gol': 'GOL', 'demo': 'DEMO', 'battsura': 'BATTSURA', 'boss': 'BATTSURA'}
+        enemy_name = enemy_type_names.get(nearest_enemy['type'], 'ENEMY')
+        target_text = target_font.render(f"TGT: {enemy_name}", True, RED)
+        screen.blit(target_text, (SCREEN_WIDTH - 100, 110))
+        dist_text = target_font.render(f"DST: {int(min_dist)}", True, RED)
+        screen.blit(dist_text, (SCREEN_WIDTH - 100, 130))
+        # Lock indicator
+        if min_dist < 300:
+            lock_text = target_font.render("LOCK", True, YELLOW)
+            screen.blit(lock_text, (SCREEN_WIDTH - 100, 150))
 
 def draw_radar():
     radar_x = SCREEN_WIDTH / 2
     radar_y = SCREEN_HEIGHT - 75
-    radar_radius = 70
+    radar_radius = 65
     
-    # Radar dish
-    pygame.draw.circle(screen, (0, 50, 0), (radar_x, radar_y), radar_radius)
+    # Radar background
+    pygame.draw.circle(screen, (0, 40, 0), (radar_x, radar_y), radar_radius)
     
     if ship_systems['radar'] == 0:
-        # Radar is out
-        font = pygame.font.Font(None, 24)
+        # Radar is completely out
+        font = pygame.font.Font(None, 20)
         text = font.render("RADAR OUT", True, RED)
         text_rect = text.get_rect(center=(radar_x, radar_y))
         screen.blit(text, text_rect)
         return
 
-    # Radar sweep
-    sweep_angle = (pygame.time.get_ticks() % 3000) / 3000 * 360
-    sweep_end_x = radar_x + radar_radius * math.cos(math.radians(sweep_angle - 90))
-    sweep_end_y = radar_y + radar_radius * math.sin(math.radians(sweep_angle - 90))
-    pygame.draw.line(screen, GREEN, (radar_x, radar_y), (sweep_end_x, sweep_end_y), 2)
-
-    # Radar grid
-    pygame.draw.circle(screen, GREEN, (radar_x, radar_y), radar_radius, 1)
-    pygame.draw.circle(screen, GREEN, (radar_x, radar_y), radar_radius / 2, 1)
+    # Radar grid circles
+    pygame.draw.circle(screen, GREEN, (radar_x, radar_y), radar_radius, 2)
+    pygame.draw.circle(screen, GREEN, (radar_x, radar_y), radar_radius * 2/3, 1)
+    pygame.draw.circle(screen, GREEN, (radar_x, radar_y), radar_radius / 3, 1)
+    # Crosshairs
     pygame.draw.line(screen, GREEN, (radar_x - radar_radius, radar_y), (radar_x + radar_radius, radar_y), 1)
     pygame.draw.line(screen, GREEN, (radar_x, radar_y - radar_radius), (radar_x, radar_y + radar_radius), 1)
 
-    # Player in center
-    pygame.draw.circle(screen, YELLOW, (radar_x, radar_y), 3)
+    # Radar sweep line
+    sweep_angle = (pygame.time.get_ticks() % 2000) / 2000 * 360
+    sweep_end_x = radar_x + radar_radius * 0.9 * math.cos(math.radians(sweep_angle - 90))
+    sweep_end_y = radar_y + radar_radius * 0.9 * math.sin(math.radians(sweep_angle - 90))
+    pygame.draw.line(screen, (0, 255, 0), (radar_x, radar_y), (sweep_end_x, sweep_end_y), 1)
+
+    # Player in center (yellow triangle pointing up)
+    player_points = [
+        (radar_x, radar_y - 5),
+        (radar_x - 3, radar_y + 3),
+        (radar_x + 3, radar_y + 3)
+    ]
+    pygame.draw.polygon(screen, YELLOW, player_points)
 
     # Draw objects on radar
     if ship_systems['radar'] < 20:
-        # Only player is visible
+        # Severely damaged - only player visible
         return
 
+    # Flickering effect when damaged
     if ship_systems['radar'] < 50 and random.random() < 0.5:
-        # Flickering effect
         return
 
-    # Enemies
+    # Show bases in current sector
+    for base in bases:
+        if base['x'] == player_grid_x and base['y'] == player_grid_y:
+            # Base is in current sector - show at edge
+            pygame.draw.rect(screen, BLUE, (radar_x - 4, radar_y - radar_radius + 5, 8, 8))
+
+    # Show planets in current sector
+    for planet in planets:
+        if planet['x'] == player_grid_x and planet['y'] == player_grid_y:
+            # Planet in sector - show at edge
+            planet_color = YELLOW if planet.get('has_key') else (150, 150, 255)
+            pygame.draw.circle(screen, planet_color, (radar_x + radar_radius - 10, radar_y), 4)
+
+    # Enemies with type-specific indicators
     for enemy in enemies:
         if enemy['grid_x'] == player_grid_x and enemy['grid_y'] == player_grid_y:
             # Calculate relative position
@@ -466,23 +608,38 @@ def draw_radar():
 
             # Scale to radar
             radar_dist = math.sqrt(rotated_x**2 + rotated_z**2)
-            if radar_dist < 500: # Only show enemies within a certain range
+            if radar_dist < 600: # Show enemies within range
                 angle = math.atan2(rotated_x, -rotated_z)
-                display_dist = (radar_dist / 500) * radar_radius
+                display_dist = min((radar_dist / 600) * radar_radius * 0.9, radar_radius * 0.9)
                 
                 blip_x = radar_x + display_dist * math.sin(angle)
                 blip_y = radar_y + display_dist * math.cos(angle)
                 
-                if enemy['type'] == 'boss':
-                    color = MAGENTA
-                else:
-                    color = RED
-                pygame.draw.circle(screen, color, (blip_x, blip_y), 3)
+                # Different shapes for different enemy types
+                if enemy['type'] == 'batte':
+                    # Small red dot for fighters
+                    pygame.draw.circle(screen, RED, (blip_x, blip_y), 2)
+                elif enemy['type'] == 'gol':
+                    # Orange square for Gols
+                    pygame.draw.rect(screen, ORANGE, (blip_x - 2, blip_y - 2, 4, 4))
+                elif enemy['type'] == 'demo':
+                    # Gray triangle for Demos
+                    pygame.draw.polygon(screen, (200, 200, 200), [
+                        (blip_x, blip_y - 3),
+                        (blip_x - 3, blip_y + 2),
+                        (blip_x + 3, blip_y + 2)
+                    ])
+                elif enemy['type'] in ['boss', 'battsura']:
+                    # Large magenta circle for boss
+                    pygame.draw.circle(screen, MAGENTA, (blip_x, blip_y), 5)
+                    pygame.draw.circle(screen, MAGENTA, (blip_x, blip_y), 3, 1)
 
-    # Target Reticle
-    reticle_size = 20
-    pygame.draw.line(screen, GREEN, (SCREEN_WIDTH/2 - reticle_size, SCREEN_HEIGHT/2), (SCREEN_WIDTH/2 + reticle_size, SCREEN_HEIGHT/2), 1)
-    pygame.draw.line(screen, GREEN, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - reticle_size), (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + reticle_size), 1)
+    # Target Reticle (enhanced)
+    reticle_size = 15
+    reticle_color = GREEN if ship_systems['computer'] > 0 else RED
+    pygame.draw.line(screen, reticle_color, (SCREEN_WIDTH/2 - reticle_size, SCREEN_HEIGHT/2), (SCREEN_WIDTH/2 + reticle_size, SCREEN_HEIGHT/2), 2)
+    pygame.draw.line(screen, reticle_color, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - reticle_size), (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + reticle_size), 2)
+    pygame.draw.circle(screen, reticle_color, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2), 8, 1)
 
 
 def draw_warp_effect():
